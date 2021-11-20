@@ -4,11 +4,13 @@
 
 #include "stm32g0xx.h"
 #include "main.h"
-#include "spi.h"
+//#include "spi.h"
 
 #include <ssd1306.hpp>
 
 namespace tlc5955 {
+
+// https://godbolt.org/z/1q9sn3Gar
 
 class Driver
 {
@@ -16,8 +18,16 @@ public:
 
     Driver() = default;
 
-    virtual ~Driver() = default;
+    static const uint8_t m_bc_data_resolution {7};
+    static const uint8_t m_mc_data_resolution {3};
+    static const uint8_t m_dc_data_resolution {7};
+    static const uint8_t m_gs_data_resolution {16};
 
+    void set_control_bit(bool ctrl);
+
+    void set_ctrl_cmd_bits();
+
+    void set_padding_bits();
 
     // @brief Set the Function Control (FC) data latch.
     // See section 8.3.2.7 "Function Control (FC) Data Latch" (page 23).
@@ -32,84 +42,108 @@ public:
     // When this bit is 1, the LSD voltage is VCC × 90%. See 8.3.5 "LED Short Detection (LSD)"
     void set_function_data(bool DSPRPT, bool TMGRST, bool RFRESH, bool ESPWM, bool LSDVLT);
   
-    // @brief The number of daisy chained driver chips in the circuit.
-    static const uint8_t m_num_driver_ics; 
+    void set_bc_data(std::bitset<m_bc_data_resolution> &blue_value, 
+        std::bitset<m_bc_data_resolution> &green_value, 
+        std::bitset<m_bc_data_resolution> &red_value);
 
-    // @brief The number of colour channels per LED
-    static const uint8_t m_num_colour_chan = 3;
-    // @brief The number of LEDs per driver chip
-    static const uint8_t m_num_leds_per_chip = 16;
+    void set_mc_data(std::bitset<m_mc_data_resolution> &blue_value, 
+        std::bitset<m_mc_data_resolution> green_value, 
+        std::bitset<m_mc_data_resolution> &red_value);
 
+    // set the individual LED position to the DC values
+    void set_dc_data(uint8_t led_idx, std::bitset<m_dc_data_resolution> &blue_value, 
+    std::bitset<m_dc_data_resolution> &green_value, 
+    std::bitset<m_dc_data_resolution> &red_value);
 
+    // convenience function to set all LEDs to the same DC values
+    void set_all_dc_data(std::bitset<m_dc_data_resolution> &blue_value, 
+        std::bitset<m_dc_data_resolution> &green_value, 
+        std::bitset<m_dc_data_resolution> &red_value);
 
-    void send_grayscale_data();
-    void send_control_data();
+    // set the individual LED position to the GS values
+    void set_gs_data(uint8_t led_pos, std::bitset<m_gs_data_resolution> &blue_value, 
+        std::bitset<m_gs_data_resolution> &green_value, 
+        std::bitset<m_gs_data_resolution> &red_value);
 
-    void set_dc_reg(uint8_t value)
-    {
-        value > m_dc_reg_max ? m_dc_reg = m_dc_reg_max : m_dc_reg = value;
-    }
+    // convenience function to set all LEDs to the same GS values
+    void set_all_gs_data(std::bitset<m_gs_data_resolution> &blue_value, 
+        std::bitset<m_gs_data_resolution> &green_value, 
+        std::bitset<m_gs_data_resolution> &red_value);
 
-    void set_bc_reg(uint8_t value)
-    {
-        value > m_bc_reg_max ? m_bc_reg = m_bc_reg_max : m_bc_reg = value;
-    }
+    void send_data();
+    
 
-
+    // void flush_common_register();
+    void flush_common_register();
 
     // @brief toggle the latch pin terminal
     void toggle_latch();
 
-
+    void print_common_bits();
 private:
 
     // Bits required for correct control reg size
-    const uint16_t  m_control_zero_bits_size {389};   
-    const uint8_t  m_total_reg_size {76};
-    const uint8_t  m_latch_delay_ms {1};
-    const uint8_t  m_ctrl_write_cnt {2};
+    static const uint16_t m_common_reg_size_bits {769};
+    static const uint8_t m_common_reg_size_bytes {97};
+
+     // @brief The number of daisy chained driver chips in the circuit.
+    uint8_t m_num_driver_ics {1}; 
+
+    // @brief The number of colour channels per LED
+    static const uint8_t m_num_colour_chan {3};
+    
+    // @brief The number of LEDs per driver chip
+    static const uint8_t m_num_leds_per_chip {16};
 
 
- 
-    // @brief Dot Correction (DC) register 
-    static const uint8_t  m_dc_reg_max {7};
-    std::bitset<m_dc_reg_max> m_dc_reg {127};
 
-    // @brief Brightness Control (BC) register 
-    static const uint8_t  m_bc_reg_max {7};
-    std::bitset<m_bc_reg_max> m_bc_reg {127};
+    // the size of each common register section
+    static const uint8_t m_latch_size_bits {1};                                                                             // 1U
+    static const uint8_t m_ctrl_cmd_size_bits {8};                                                                          // 8U
+    static constexpr uint16_t m_gs_data_one_led_size_bits {m_gs_data_resolution * m_num_colour_chan};                       // 48U
+    static constexpr uint16_t m_gs_data_section_size_bits {m_gs_data_resolution * m_num_leds_per_chip * m_num_colour_chan}; // 768U
+    static const uint8_t m_func_data_section_size_bits {5};                                                                 // 5U
+    static constexpr uint8_t m_bc_data_section_size_bits {m_bc_data_resolution * m_num_colour_chan};                        // 21U
+    static constexpr uint8_t m_mc_data_section_size_bits {m_mc_data_resolution * m_num_colour_chan};                        // 9U
+    static constexpr uint8_t m_dc_data_one_led_size_bits {m_dc_data_resolution * m_num_colour_chan};                        // 21U
+    static constexpr uint16_t m_dc_data_section_size_bits {m_dc_data_resolution * m_num_leds_per_chip * m_num_colour_chan}; // 336U
+    static constexpr uint16_t m_padding_section_size_bits {                                                                 // 389U
+        m_common_reg_size_bits  - m_latch_size_bits - m_ctrl_cmd_size_bits - m_func_data_section_size_bits - m_bc_data_section_size_bits - m_mc_data_section_size_bits - m_dc_data_section_size_bits
+    };
 
-    // @brief Max Current (MC) register size
-    static const uint8_t  m_max_current_reg_max {3};
-    std::bitset<m_max_current_reg_max> m_mc_reg {4};
+    // the offset of each common register section
+    static const uint8_t m_latch_offset {0};
+    static constexpr uint8_t m_ctrl_cmd_offset {static_cast<uint8_t>(m_latch_offset + m_latch_size_bits)};                  // 1U
+    static constexpr uint8_t m_gs_data_offset {static_cast<uint8_t>(m_ctrl_cmd_offset + m_ctrl_cmd_size_bits)};             // 9U - used in gs data latch only
+    static constexpr uint8_t m_padding_offset {static_cast<uint8_t>(m_ctrl_cmd_offset + m_ctrl_cmd_size_bits)};             // 9U - used in ctrl data latch only
+    static constexpr uint16_t m_func_data_offset {static_cast<uint16_t>(m_padding_offset + m_padding_section_size_bits)};   // 9U
+    static constexpr uint16_t m_bc_data_offset {static_cast<uint16_t>(m_func_data_offset + m_func_data_section_size_bits)}; // 398U
+    static constexpr uint16_t m_mc_data_offset {static_cast<uint16_t>(m_bc_data_offset + m_bc_data_section_size_bits)};     // 424U
+    static constexpr uint16_t m_dc_data_offset {static_cast<uint16_t>(m_mc_data_offset + m_mc_data_section_size_bits)};     // 433U
 
-    // @brief Function Control (FC) register
-    static const uint8_t  m_function_ctrl_reg_max = 5;
-    std::bitset<m_function_ctrl_reg_max> m_function_data {0};
+void set_value_nth_bit(uint8_t &target, bool value, uint16_t shift_idx);
+
+
 
     
-    // @brief temp buffer for red LED brightness control data 
-    std::bitset<m_bc_reg_max> m_bright_red {0};
-    // @brief temp buffer for green LED brightness control data
-    std::bitset<m_bc_reg_max> m_bright_green {0};
-    // @brief temp buffer for blue LED brightness control data
-    std::bitset<m_bc_reg_max> m_bright_blue {0};
-    // @brief temp buffer for red LED max current data
-    std::bitset<m_max_current_reg_max> m_mc_red {0};
-    // @brief temp buffer for green LED max current data
-    std::bitset<m_max_current_reg_max> m_mc_green {0};
-    // @brief temp buffer for blue LED max current data
-    std::bitset<m_max_current_reg_max> m_mc_blue {0};
+    std::array<uint8_t, m_common_reg_size_bytes> m_common_byte_register{0};
+    std::bitset<m_common_reg_size_bits> m_common_bit_register{0};
+
+    const uint8_t  m_latch_delay_ms {1};
 
     // @brief Predefined write command.
     // section 8.3.2.3 "Control Data Latch" (page 21).
     // section 8.3.2.2 "Grayscale (GS) Data Latch" (page 20).
     // https://www.ti.com/lit/ds/symlink/tlc5955.pdf
-    std::bitset<8> m_write_cmd {0x96};
+    std::bitset<8> m_ctrl_cmd {0x96};
 
     // @brief Predefined flush command
     std::bitset<8> m_flush_cmd {0};
 
+    // void enable_spi();
+    // void disable_spi();
+
+    // void enable_gpio_output_only();
  
     // @brief The HAL SPI interface
     SPI_HandleTypeDef m_spi_interface {hspi2};
