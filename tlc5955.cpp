@@ -174,10 +174,10 @@ void Driver::set_mc_data(std::bitset<m_mc_data_resolution> &blue_value,
 
 }
 
-void Driver::set_dc_data(const uint8_t led_idx, std::bitset<m_dc_data_resolution> &blue_value, 
-    std::bitset<m_dc_data_resolution> &green_value, 
-    std::bitset<m_dc_data_resolution> &red_value)
-{
+// void Driver::set_dc_data(const uint8_t led_idx, std::bitset<m_dc_data_resolution> &blue_value, 
+//     std::bitset<m_dc_data_resolution> &green_value, 
+//     std::bitset<m_dc_data_resolution> &red_value)
+// {
 
     // DC        B15    G15    R15    B14    G14    R14    B13    G13    R13    B12    G12    R12
     // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
@@ -200,7 +200,7 @@ void Driver::set_dc_data(const uint8_t led_idx, std::bitset<m_dc_data_resolution
     // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
     //        #85   #86     #87      #88    #89     #90     #91     #92     #93     #94     #95   #96
 
-}
+// }
 
 void Driver::set_all_dc_data(std::bitset<m_dc_data_resolution> &blue_value, 
     std::bitset<m_dc_data_resolution> &green_value, 
