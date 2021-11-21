@@ -2,8 +2,12 @@
 #include <stdint.h>
 #include <bitset>
 
-#include "stm32g0xx.h"
-#include "main.h"
+#ifdef USE_HAL_DRIVER
+    #include "stm32g0xx.h"
+    #include "main.h"
+#endif
+
+
 //#include "spi.h"
 
 #include <ssd1306.hpp>
@@ -149,7 +153,7 @@ void set_value_nth_bit(uint8_t &target, bool value, uint16_t shift_idx);
     // void disable_spi();
 
     // void enable_gpio_output_only();
- 
+#ifdef USE_HAL_DRIVER 
     // @brief The HAL SPI interface
     SPI_HandleTypeDef m_spi_interface {hspi2};
     // @brief Latch GPIO pin
@@ -168,7 +172,7 @@ void set_value_nth_bit(uint8_t &target, bool value, uint16_t shift_idx);
     uint16_t m_sck_pin {TLC5955_SPI2_SCK_Pin};
     // @brief SPI Clock GPIO port
     GPIO_TypeDef* m_sck_port {TLC5955_SPI2_SCK_GPIO_Port};
-	
+#endif	
 
 };
 

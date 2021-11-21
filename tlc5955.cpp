@@ -3,6 +3,7 @@
 #include <sstream>
 #include <cmath>
 #include <cstring>
+#include <SEGGER_RTT.h>
 
 namespace tlc5955 
 {
@@ -533,18 +534,22 @@ void Driver::set_all_gs_data(std::bitset<m_gs_data_resolution> &blue_value,
 void Driver::send_data()
 {
     // clock the data through and latch
+#ifdef USE_HAL_DRIVER
     HAL_StatusTypeDef res = HAL_SPI_Transmit(&m_spi_interface, (uint8_t*)m_common_byte_register.data(), m_common_reg_size_bytes, HAL_MAX_DELAY);
     UNUSED(res);
+#endif
     toggle_latch();
 }
 
 void Driver::toggle_latch()
 {
+#ifdef USE_HAL_DRIVER
     HAL_Delay(m_latch_delay_ms);
     HAL_GPIO_WritePin(m_lat_port, m_lat_pin, GPIO_PIN_SET);
     HAL_Delay(m_latch_delay_ms);
     HAL_GPIO_WritePin(m_lat_port, m_lat_pin, GPIO_PIN_RESET);
     HAL_Delay(m_latch_delay_ms);
+#endif
 }
 
 void Driver::flush_common_register()
