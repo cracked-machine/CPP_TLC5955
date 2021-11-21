@@ -80,7 +80,12 @@ public:
     void toggle_latch();
 
     void print_common_bits();
+
+    uint16_t startup_tests();
+
 private:
+
+    uint8_t built_in_test_fail {0};
 
     // Bits required for correct control reg size
     static const uint16_t m_common_reg_size_bits {769};

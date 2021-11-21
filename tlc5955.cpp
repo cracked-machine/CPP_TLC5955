@@ -7,11 +7,146 @@
 namespace tlc5955 
 {
 
+uint16_t Driver::startup_tests()
+{
+    // latch bit test
+    if (m_common_byte_register[0] != 0b00000000) built_in_test_fail++;       
+    set_control_bit(true);
+    if (m_common_byte_register[0] != 0b10000000) built_in_test_fail++;      // 128
+    
+    // control byte test
+
+    // Ctrl      10010110  
+    // bits      [======]
+    // Bytes     ======][
+    //             #0    #1
+
+    set_ctrl_cmd_bits();
+    if (m_common_byte_register[0] != 0b11001011) built_in_test_fail++;      // 203
+
+    // padding bits test - bytes 1-48 should be empty
+    set_padding_bits();
+    for (uint8_t idx = 1; idx < 49; idx++)
+    {
+        if (m_common_byte_register[idx] != 0) { built_in_test_fail++; }
+    }
+
+    // function bits test   
+    // bits      [===]
+    //           =][==
+    // Bytes   #49  #50
+
+    set_function_data(true, false, false, false, false);    
+    if (m_common_byte_register[49] != 0b00000010) built_in_test_fail++;   // 2
+    set_function_data(true, true, false, false, false);
+    if (m_common_byte_register[49] != 0b00000011) built_in_test_fail++;   // 3
+    set_function_data(true, true, true, false, false);
+    if (m_common_byte_register[50] != 0b10000000) built_in_test_fail++;   // 128
+    set_function_data(true, true, true, true, false);
+    if (m_common_byte_register[50] != 0b11000000) built_in_test_fail++;   // 192
+    set_function_data(true, true, true, true, true);
+    if (m_common_byte_register[50] != 0b11100000) built_in_test_fail++;   // 224
+
+    // BC bits test
+    // BC         blue   green   red
+    // bits      [=====][=====][=====]
+    // bits      ====][======][======]
+    // Bytes     #50    #51      #52
+
+    std::bitset<m_bc_data_resolution> bc_test_on {127};
+    std::bitset<m_bc_data_resolution> bc_test_off {0};
+
+    if (m_common_byte_register[50] != 0b11100000) built_in_test_fail++;     // 224
+    if (m_common_byte_register[51] != 0b00000000) built_in_test_fail++;  
+    if (m_common_byte_register[52] != 0b00000000) built_in_test_fail++;   
+
+    set_bc_data(bc_test_on, bc_test_off, bc_test_off);
+    if (m_common_byte_register[50] != 0b11111111) built_in_test_fail++;     // 255
+    if (m_common_byte_register[51] != 0b11000000) built_in_test_fail++;     // 192
+    if (m_common_byte_register[52] != 0x00000000) built_in_test_fail++;   
+
+    set_bc_data(bc_test_off, bc_test_on, bc_test_off);
+    if (m_common_byte_register[50] != 0b11100000) built_in_test_fail++;     // 224
+    if (m_common_byte_register[51] != 0b00111111) built_in_test_fail++;     // 63
+    if (m_common_byte_register[52] != 0b10000000) built_in_test_fail++;     // 128
+    
+    set_bc_data(bc_test_off, bc_test_off, bc_test_on);
+    if (m_common_byte_register[50] != 0b11100000) built_in_test_fail++;     // 224
+    if (m_common_byte_register[51] != 0x00000000) built_in_test_fail++;   
+    if (m_common_byte_register[52] != 0b01111111) built_in_test_fail++;     // 127
+
+    set_bc_data(bc_test_off, bc_test_off, bc_test_off);
+    if (m_common_byte_register[50] != 0b11100000) built_in_test_fail++;     // 224
+    if (m_common_byte_register[51] != 0b00000000) built_in_test_fail++;   
+    if (m_common_byte_register[52] != 0b00000000) built_in_test_fail++;    
+
+    set_bc_data(bc_test_on, bc_test_on, bc_test_on);
+    if (m_common_byte_register[50] != 0b11111111) built_in_test_fail++;     // 255
+    if (m_common_byte_register[51] != 0b11111111) built_in_test_fail++;     // 255
+    if (m_common_byte_register[52] != 0b11111111) built_in_test_fail++;     // 255   
+
+    // MC         B  G  R
+    // bits      [=][=][=]
+    // bits      [======][
+    // Bytes       #53    #54
+
+    std::bitset<m_mc_data_resolution> mc_test_on {7};
+    std::bitset<m_mc_data_resolution> mc_test_off {0};
+    set_mc_data(mc_test_on, mc_test_off, mc_test_off);
+    if (m_common_byte_register[53] != 0b11100000) built_in_test_fail++;     // 224
+    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     // 0
+    set_mc_data(mc_test_off, mc_test_on, mc_test_off);
+    if (m_common_byte_register[53] != 0b00011100) built_in_test_fail++;     // 28
+    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     // 0
+    set_mc_data(mc_test_off, mc_test_off, mc_test_on);
+    if (m_common_byte_register[53] != 0b00000011) built_in_test_fail++;     // 3
+    if (m_common_byte_register[54] != 0b10000000) built_in_test_fail++;     // 128
+
+    set_mc_data(mc_test_off, mc_test_off, mc_test_off);
+    if (m_common_byte_register[53] != 0b00000000) built_in_test_fail++;     
+    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     
+
+    std::bitset<m_mc_data_resolution> mc_test_blue {1};
+    std::bitset<m_mc_data_resolution> mc_test_green {1};
+    std::bitset<m_mc_data_resolution> mc_test_red {1};
+    set_mc_data(mc_test_off, mc_test_off, mc_test_red);   
+    if (m_common_byte_register[53] != 0b00000000) built_in_test_fail++;     // 0   
+    if (m_common_byte_register[54] != 0b10000000) built_in_test_fail++;     // 128
+    set_mc_data(mc_test_off, mc_test_off, mc_test_red <<= 1);
+    if (m_common_byte_register[53] != 0b00000001) built_in_test_fail++;     // 1
+    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     // 0
+    set_mc_data(mc_test_off, mc_test_off, mc_test_red <<= 1);
+    if (m_common_byte_register[53] != 0b00000010) built_in_test_fail++;     // 2
+    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     // 0
+    set_mc_data(mc_test_off, mc_test_green, mc_test_red <<= 1);
+    if (m_common_byte_register[53] != 0b00000100) built_in_test_fail++;     // 4
+    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     // 0
+    set_mc_data(mc_test_off, mc_test_green <<= 1, mc_test_red);
+    if (m_common_byte_register[53] != 0b00001000) built_in_test_fail++;     // 8
+    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     // 0
+    set_mc_data(mc_test_off, mc_test_green <<= 1, mc_test_red);
+    if (m_common_byte_register[53] != 0b00010000) built_in_test_fail++;     // 16
+    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     // 0
+    set_mc_data(mc_test_blue, mc_test_green <<= 1, mc_test_red);
+    if (m_common_byte_register[53] != 0b00100000) built_in_test_fail++;     // 32
+    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     // 0    
+    set_mc_data(mc_test_blue <<= 1, mc_test_green, mc_test_red);
+    if (m_common_byte_register[53] != 0b01000000) built_in_test_fail++;     // 64
+    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     // 0    
+    set_mc_data(mc_test_blue <<= 1, mc_test_green, mc_test_red);
+    if (m_common_byte_register[53] != 0b10000000) built_in_test_fail++;     // 128
+    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     // 0    
+
+
+
+    return built_in_test_fail;
+}
+
 void Driver::set_value_nth_bit(uint8_t &target, bool value, uint16_t shift_idx)
 {
-    // if value == true, set the bit, otherwise clear the bit
-    value ? target |= (value << shift_idx) : (target &= ~(value << shift_idx));
-    print_common_bits(); 
+    if (value) { target |= (1U << shift_idx); }
+    else { target &= ~(1U << shift_idx); }
+    //print_common_bits(); 
 }
 
 
@@ -174,10 +309,10 @@ void Driver::set_mc_data(std::bitset<m_mc_data_resolution> &blue_value,
 
 }
 
-// void Driver::set_dc_data(const uint8_t led_idx, std::bitset<m_dc_data_resolution> &blue_value, 
-//     std::bitset<m_dc_data_resolution> &green_value, 
-//     std::bitset<m_dc_data_resolution> &red_value)
-// {
+void Driver::set_dc_data(const uint8_t led_idx, std::bitset<m_dc_data_resolution> &blue_value, 
+    std::bitset<m_dc_data_resolution> &green_value, 
+    std::bitset<m_dc_data_resolution> &red_value)
+{
 
     // DC        B15    G15    R15    B14    G14    R14    B13    G13    R13    B12    G12    R12
     // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
@@ -195,12 +330,141 @@ void Driver::set_mc_data(std::bitset<m_mc_data_resolution> &blue_value,
     //          #75     #76     #77     #78     #79     #80     #81     #82     #83     #84     #85
 
     
+
+
+    switch(led_idx)
+    {
+        case 0:
+
+            set_value_nth_bit(m_common_byte_register[93], blue_value.test(6), 3);
+            set_value_nth_bit(m_common_byte_register[93], blue_value.test(5), 2);
+            set_value_nth_bit(m_common_byte_register[93], blue_value.test(4), 1);
+            set_value_nth_bit(m_common_byte_register[93], blue_value.test(3), 0);
+            set_value_nth_bit(m_common_byte_register[94], blue_value.test(2), 7);
+            set_value_nth_bit(m_common_byte_register[94], blue_value.test(1), 6);
+            set_value_nth_bit(m_common_byte_register[94], blue_value.test(0), 5);
+
+            set_value_nth_bit(m_common_byte_register[94], green_value.test(6), 4);
+            set_value_nth_bit(m_common_byte_register[94], green_value.test(5), 3);
+            set_value_nth_bit(m_common_byte_register[94], green_value.test(4), 2);
+            set_value_nth_bit(m_common_byte_register[94], green_value.test(3), 1);
+            set_value_nth_bit(m_common_byte_register[94], green_value.test(2), 0);
+            set_value_nth_bit(m_common_byte_register[95], green_value.test(1), 7);
+            set_value_nth_bit(m_common_byte_register[95], green_value.test(0), 6);
+
+            set_value_nth_bit(m_common_byte_register[95], red_value.test(6), 5);
+            set_value_nth_bit(m_common_byte_register[95], red_value.test(5), 4);
+            set_value_nth_bit(m_common_byte_register[95], red_value.test(4), 3);
+            set_value_nth_bit(m_common_byte_register[95], red_value.test(3), 2);
+            set_value_nth_bit(m_common_byte_register[95], red_value.test(2), 1);
+            set_value_nth_bit(m_common_byte_register[95], red_value.test(1), 0);
+            set_value_nth_bit(m_common_byte_register[96], red_value.test(0), 7);
+
+            break;
+
+
+
+        case 1:
+            set_value_nth_bit(m_common_byte_register[90], blue_value.test(6), 0);
+            set_value_nth_bit(m_common_byte_register[91], blue_value.test(5), 7);
+            set_value_nth_bit(m_common_byte_register[91], blue_value.test(4), 6);
+            set_value_nth_bit(m_common_byte_register[91], blue_value.test(3), 5);
+            set_value_nth_bit(m_common_byte_register[91], blue_value.test(2), 4);
+            set_value_nth_bit(m_common_byte_register[91], blue_value.test(1), 3);
+            set_value_nth_bit(m_common_byte_register[91], blue_value.test(0), 2);
+
+            set_value_nth_bit(m_common_byte_register[91], green_value.test(6), 1);
+            set_value_nth_bit(m_common_byte_register[91], green_value.test(5), 0);
+            set_value_nth_bit(m_common_byte_register[92], green_value.test(4), 7);
+            set_value_nth_bit(m_common_byte_register[92], green_value.test(3), 6);
+            set_value_nth_bit(m_common_byte_register[92], green_value.test(2), 5);
+            set_value_nth_bit(m_common_byte_register[92], green_value.test(1), 4);
+            set_value_nth_bit(m_common_byte_register[92], green_value.test(0), 3);
+
+            set_value_nth_bit(m_common_byte_register[92], red_value.test(6), 2);
+            set_value_nth_bit(m_common_byte_register[92], red_value.test(5), 1);
+            set_value_nth_bit(m_common_byte_register[92], red_value.test(4), 0);
+            set_value_nth_bit(m_common_byte_register[93], red_value.test(3), 7);
+            set_value_nth_bit(m_common_byte_register[93], red_value.test(2), 6);
+            set_value_nth_bit(m_common_byte_register[93], red_value.test(1), 5);
+            set_value_nth_bit(m_common_byte_register[93], red_value.test(0), 4);
+
+            break;
+        case 2:
+
+            set_value_nth_bit(m_common_byte_register[88], blue_value.test(6), 5);
+            set_value_nth_bit(m_common_byte_register[88], blue_value.test(5), 4);
+            set_value_nth_bit(m_common_byte_register[88], blue_value.test(4), 3);
+            set_value_nth_bit(m_common_byte_register[88], blue_value.test(3), 2);
+            set_value_nth_bit(m_common_byte_register[88], blue_value.test(2), 1);
+            set_value_nth_bit(m_common_byte_register[88], blue_value.test(1), 0);
+            set_value_nth_bit(m_common_byte_register[89], blue_value.test(0), 7);
+
+            set_value_nth_bit(m_common_byte_register[89], green_value.test(6), 6);
+            set_value_nth_bit(m_common_byte_register[89], green_value.test(5), 5);
+            set_value_nth_bit(m_common_byte_register[89], green_value.test(4), 4);
+            set_value_nth_bit(m_common_byte_register[89], green_value.test(3), 3);
+            set_value_nth_bit(m_common_byte_register[89], green_value.test(2), 2);
+            set_value_nth_bit(m_common_byte_register[89], green_value.test(1), 1);
+            set_value_nth_bit(m_common_byte_register[89], green_value.test(0), 0);
+
+            set_value_nth_bit(m_common_byte_register[90], red_value.test(6), 7);
+            set_value_nth_bit(m_common_byte_register[90], red_value.test(5), 6);
+            set_value_nth_bit(m_common_byte_register[90], red_value.test(4), 5);
+            set_value_nth_bit(m_common_byte_register[90], red_value.test(3), 4);
+            set_value_nth_bit(m_common_byte_register[90], red_value.test(2), 3);
+            set_value_nth_bit(m_common_byte_register[90], red_value.test(1), 2);
+            set_value_nth_bit(m_common_byte_register[90], red_value.test(0), 1);
+            
+            break;
+        case 3:
+
     // DC        B3     G3     R3      B2     G2    R2      B1    G1     R1     B0     G0     R0
     // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
     // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
     //        #85   #86     #87      #88    #89     #90     #91     #92     #93     #94     #95   #96
 
-// }
+            set_value_nth_bit(m_common_byte_register[85], blue_value.test(6), 2);
+            set_value_nth_bit(m_common_byte_register[85], blue_value.test(5), 1);
+            set_value_nth_bit(m_common_byte_register[85], blue_value.test(4), 0);
+            set_value_nth_bit(m_common_byte_register[86], blue_value.test(3), 7);
+            set_value_nth_bit(m_common_byte_register[85], blue_value.test(2), 6);
+            set_value_nth_bit(m_common_byte_register[85], blue_value.test(1), 5);
+            set_value_nth_bit(m_common_byte_register[85], blue_value.test(0), 4);
+
+            
+
+            
+
+            break;
+        case 4:
+            break;
+        case 5:
+            break;
+        case 6:
+            break;
+        case 7:
+            break;
+        case 8:
+            break;
+        case 9:
+            break;
+        case 10:
+            break;
+        case 11:
+            break;
+        case 12:
+            break;
+        case 13:
+            break;
+        case 14:
+            break;
+        case 15:
+            break;
+
+    }
+
+}
 
 void Driver::set_all_dc_data(std::bitset<m_dc_data_resolution> &blue_value, 
     std::bitset<m_dc_data_resolution> &green_value, 
