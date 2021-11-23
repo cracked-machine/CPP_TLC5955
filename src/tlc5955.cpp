@@ -3,8 +3,9 @@
 #include <sstream>
 #include <cmath>
 #include <cstring>
-#include <SEGGER_RTT.h>
-
+#ifdef USE_RTT
+    #include <SEGGER_RTT.h>
+#endif
 namespace tlc5955 
 {
 
@@ -147,7 +148,7 @@ void Driver::set_value_nth_bit(uint8_t &target, bool value, uint16_t shift_idx)
 {
     if (value) { target |= (1U << shift_idx); }
     else { target &= ~(1U << shift_idx); }
-    //print_common_bits(); 
+    print_common_bits(); 
 }
 
 
@@ -560,11 +561,13 @@ void Driver::flush_common_register()
 
 void Driver::print_common_bits()
 {
+#ifdef USE_RTT
     SEGGER_RTT_printf(0, "\r\n");
     for (uint16_t idx = 45; idx < 53; idx++)
     {
         SEGGER_RTT_printf(0, "%u ", +m_common_byte_register[idx]);
     }
+#endif
 }
 
 // void Driver::flush_common_register()
