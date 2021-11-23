@@ -1,7 +1,7 @@
 
 
 
-#include "../../build/catch.hpp"
+#include "catch.hpp"
 #include <iostream>
 #include <tlc5955.hpp>
 
