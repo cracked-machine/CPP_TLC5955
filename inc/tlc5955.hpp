@@ -22,6 +22,8 @@ public:
 
     Driver() = default;
 
+    virtual ~Driver() = default;
+
     static const uint8_t m_bc_data_resolution {7};
     static const uint8_t m_mc_data_resolution {3};
     static const uint8_t m_dc_data_resolution {7};
@@ -50,14 +52,14 @@ public:
         std::bitset<m_bc_data_resolution> &green_value, 
         std::bitset<m_bc_data_resolution> &red_value);
 
-    void set_mc_data(std::bitset<m_mc_data_resolution> &blue_value, 
-        std::bitset<m_mc_data_resolution> green_value, 
-        std::bitset<m_mc_data_resolution> &red_value);
+    void set_mc_data(const std::bitset<m_mc_data_resolution> &blue_value, 
+        const std::bitset<m_mc_data_resolution> green_value, 
+        const std::bitset<m_mc_data_resolution> &red_value);
 
     // set the individual LED position to the DC values
-    void set_dc_data(uint8_t led_idx, std::bitset<m_dc_data_resolution> &blue_value, 
-    std::bitset<m_dc_data_resolution> &green_value, 
-    std::bitset<m_dc_data_resolution> &red_value);
+    void set_dc_data(uint8_t led_idx, const std::bitset<m_dc_data_resolution> &blue_value, 
+    const std::bitset<m_dc_data_resolution> &green_value, 
+    const std::bitset<m_dc_data_resolution> &red_value);
 
     // convenience function to set all LEDs to the same DC values
     void set_all_dc_data(std::bitset<m_dc_data_resolution> &blue_value, 
@@ -87,13 +89,18 @@ public:
 
     uint16_t startup_tests();
 
+protected:
+
+    static const uint8_t m_common_reg_size_bytes {97};
+    std::array<uint8_t, m_common_reg_size_bytes> m_common_byte_register{0};
+
 private:
 
     uint8_t built_in_test_fail {0};
 
     // Bits required for correct control reg size
     static const uint16_t m_common_reg_size_bits {769};
-    static const uint8_t m_common_reg_size_bytes {97};
+
 
      // @brief The number of daisy chained driver chips in the circuit.
     uint8_t m_num_driver_ics {1}; 
@@ -130,12 +137,12 @@ private:
     static constexpr uint16_t m_mc_data_offset {static_cast<uint16_t>(m_bc_data_offset + m_bc_data_section_size_bits)};     // 424U
     static constexpr uint16_t m_dc_data_offset {static_cast<uint16_t>(m_mc_data_offset + m_mc_data_section_size_bits)};     // 433U
 
-void set_value_nth_bit(uint8_t &target, bool value, uint16_t shift_idx);
+    void set_value_nth_bit(uint8_t &target, uint16_t target_idx, bool value);
 
 
 
     
-    std::array<uint8_t, m_common_reg_size_bytes> m_common_byte_register{0};
+    
     std::bitset<m_common_reg_size_bits> m_common_bit_register{0};
 
     const uint8_t  m_latch_delay_ms {1};
