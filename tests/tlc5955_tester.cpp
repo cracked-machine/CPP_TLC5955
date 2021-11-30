@@ -34,5 +34,15 @@ void tlc5955_tester::print_register(bool dec_format, bool hex_format)
     std::cout << std::endl;
 }
 
+tlc5955_tester::data_t::iterator tlc5955_tester::data_begin()
+{
+    return m_common_byte_register.begin();
+}
+
+tlc5955_tester::data_t::iterator tlc5955_tester::data_end()
+{
+    return m_common_byte_register.end();
+}
+
 
 } // namespace tlc5955 
