@@ -53,7 +53,8 @@ public:
     // @param blue_value The 7-bit word for blue BC
     // @param green_value The 7-bit word for green BC
     // @param red_value The 7-bit word for red BC    
-    void set_bc_data(std::bitset<m_bc_data_resolution> &blue_value, 
+    void set_bc_data(
+        std::bitset<m_bc_data_resolution> &blue_value, 
         std::bitset<m_bc_data_resolution> &green_value, 
         std::bitset<m_bc_data_resolution> &red_value);
 
@@ -62,7 +63,8 @@ public:
     // @param blue_value The 3-bit word for blue MC
     // @param green_value The 3-bit word for green MC
     // @param red_value The 3-bit word for red MC
-    void set_mc_data(const std::bitset<m_mc_data_resolution> &blue_value, 
+    void set_mc_data(
+        const std::bitset<m_mc_data_resolution> &blue_value, 
         const std::bitset<m_mc_data_resolution> green_value, 
         const std::bitset<m_mc_data_resolution> &red_value);
 
@@ -72,12 +74,18 @@ public:
     // @param blue_value The 7-bit word for blue DC
     // @param green_value The 7-bit word for green DC
     // @param red_value The 7-bit word for red DC
-    void set_dc_data(uint8_t led_idx, const std::bitset<m_dc_data_resolution> &blue_value, 
-    const std::bitset<m_dc_data_resolution> &green_value, 
-    const std::bitset<m_dc_data_resolution> &red_value);
+    bool set_dc_data(
+        uint8_t led_idx, 
+        const std::bitset<m_dc_data_resolution> &blue_value, 
+        const std::bitset<m_dc_data_resolution> &green_value, 
+        const std::bitset<m_dc_data_resolution> &red_value);
 
-    // convenience function to set all LEDs to the same DC values
-    void set_all_dc_data(std::bitset<m_dc_data_resolution> &blue_value, 
+    // @brief Convenience function to set all LEDs to the same DC values
+    // @param blue_value The 7-bit word for blue DC
+    // @param green_value The 7-bit word for green DC
+    // @param red_value The 7-bit word for red DC
+    void set_all_dc_data(
+        std::bitset<m_dc_data_resolution> &blue_value, 
         std::bitset<m_dc_data_resolution> &green_value, 
         std::bitset<m_dc_data_resolution> &red_value);
 
@@ -86,14 +94,18 @@ public:
     // @param blue_value The 16-bit word for blue GS
     // @param green_value The 16-bit word for green GS
     // @param red_value The 16-bit word for red GS
-    void set_gs_data(
-        uint8_t led_pos, 
+    bool set_gs_data(
+        uint8_t led_idx, 
         std::bitset<m_gs_data_resolution> &blue_value, 
         std::bitset<m_gs_data_resolution> &green_value, 
         std::bitset<m_gs_data_resolution> &red_value);
 
-    // convenience function to set all LEDs to the same GS values
-    void set_all_gs_data(std::bitset<m_gs_data_resolution> &blue_value, 
+    // @brief Convenience function to set all LEDs to the same GS values
+    // @param blue_value The 16-bit word for blue GS
+    // @param green_value The 16-bit word for green GS
+    // @param red_value The 16-bit word for red GS
+    void set_all_gs_data(
+        std::bitset<m_gs_data_resolution> &blue_value, 
         std::bitset<m_gs_data_resolution> &green_value, 
         std::bitset<m_gs_data_resolution> &red_value);
 

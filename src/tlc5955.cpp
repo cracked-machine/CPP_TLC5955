@@ -180,7 +180,7 @@ void Driver::set_mc_data(
 
 }
 
-void Driver::set_dc_data(
+bool Driver::set_dc_data(
     const uint8_t led_idx, 
     const std::bitset<m_dc_data_resolution> &blue_value, 
     const std::bitset<m_dc_data_resolution> &green_value, 
@@ -788,7 +788,11 @@ void Driver::set_dc_data(
 
             break;
 
+        default:    // led_idx > 15
+            return false;
     }
+
+    return true;
 
 }
 
@@ -803,14 +807,18 @@ void Driver::set_all_dc_data(
     }
 }
 
-void Driver::set_gs_data(
-    uint8_t led_pos, 
-    std::bitset<16> &blue_value, 
-    std::bitset<16> &green_value, 
-    std::bitset<16> &red_value)
+bool Driver::set_gs_data(
+    uint8_t led_idx, 
+    std::bitset<m_gs_data_resolution> &blue_value, 
+    std::bitset<m_gs_data_resolution> &green_value, 
+    std::bitset<m_gs_data_resolution> &red_value)
 {
+    if (led_idx >= m_num_driver_ics)
+    {
+        return false;
+    }
     // offset for the current LED position
-    const uint16_t led_offset = m_gs_data_one_led_size_bits * led_pos;
+    const uint16_t led_offset = m_gs_data_one_led_size_bits * led_idx;
 
     // the current bit position within the GS section of the common register, starting at the section offset + LED offset
     uint16_t gs_common_pos = m_gs_data_offset + led_offset;
@@ -847,6 +855,8 @@ void Driver::set_gs_data(
            gs_common_pos++;
         }
     }    
+
+    return true;
 }
 
 void Driver::set_all_gs_data(
