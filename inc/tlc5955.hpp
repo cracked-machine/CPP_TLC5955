@@ -85,9 +85,9 @@ public:
     // @param green_value The 7-bit word for green DC
     // @param red_value The 7-bit word for red DC
     void set_all_dc_data(
-        std::bitset<m_dc_data_resolution> &blue_value, 
-        std::bitset<m_dc_data_resolution> &green_value, 
-        std::bitset<m_dc_data_resolution> &red_value);
+        const std::bitset<m_dc_data_resolution> &blue_value, 
+        const std::bitset<m_dc_data_resolution> &green_value, 
+        const std::bitset<m_dc_data_resolution> &red_value);
 
     // @brief Write the GS (Grey Scale) data to the common register for the specified LED
     // @param led_pos The selected LED
@@ -96,18 +96,18 @@ public:
     // @param red_value The 16-bit word for red GS
     bool set_gs_data(
         uint8_t led_idx, 
-        std::bitset<m_gs_data_resolution> &blue_value, 
-        std::bitset<m_gs_data_resolution> &green_value, 
-        std::bitset<m_gs_data_resolution> &red_value);
+        const std::bitset<m_gs_data_resolution> &blue_value, 
+        const std::bitset<m_gs_data_resolution> &green_value, 
+        const std::bitset<m_gs_data_resolution> &red_value);
 
     // @brief Convenience function to set all LEDs to the same GS values
     // @param blue_value The 16-bit word for blue GS
     // @param green_value The 16-bit word for green GS
     // @param red_value The 16-bit word for red GS
     void set_all_gs_data(
-        std::bitset<m_gs_data_resolution> &blue_value, 
-        std::bitset<m_gs_data_resolution> &green_value, 
-        std::bitset<m_gs_data_resolution> &red_value);
+        const std::bitset<m_gs_data_resolution> &blue_value, 
+        const std::bitset<m_gs_data_resolution> &green_value, 
+        const std::bitset<m_gs_data_resolution> &red_value);
 
     // @brief Send the data via SPI bus and toggle the latch pin
     void send_data();
@@ -162,7 +162,7 @@ private:
     // the offset of each common register section
     static const uint8_t m_latch_offset {0};
     static constexpr uint8_t m_ctrl_cmd_offset {static_cast<uint8_t>(m_latch_offset + m_latch_size_bits)};                  // 1U
-    static constexpr uint8_t m_gs_data_offset {static_cast<uint8_t>(m_ctrl_cmd_offset + m_ctrl_cmd_size_bits)};             // 9U - used in gs data latch only
+    static constexpr uint8_t m_gs_data_offset {static_cast<uint8_t>(m_ctrl_cmd_offset)};                                    // 9U - used in gs data latch only
     static constexpr uint8_t m_padding_offset {static_cast<uint8_t>(m_ctrl_cmd_offset + m_ctrl_cmd_size_bits)};             // 9U - used in ctrl data latch only
     static constexpr uint16_t m_func_data_offset {static_cast<uint16_t>(m_padding_offset + m_padding_section_size_bits)};   // 9U
     static constexpr uint16_t m_bc_data_offset {static_cast<uint16_t>(m_func_data_offset + m_func_data_section_size_bits)}; // 398U

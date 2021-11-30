@@ -279,6 +279,183 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
     }
 }
 
+// @brief Testing tlc5955::Driver::set_gs_data()
+TEST_CASE("Greyscale bit tests", "[tlc5955]")
+{
+    tlc5955::tlc5955_tester leds_tester;
+
+    // @brief Test Preset: all bits of one colour on 
+    const std::bitset<leds_tester.m_gs_data_resolution> preset_gs_test_on {0xFFFF};
+    // @brief Test Preset: all bits of one colour off
+    const std::bitset<leds_tester.m_gs_data_resolution> preset_gs_test_off {0};
+
+    uint8_t result {0};
+    SECTION("Invalid LED index")
+    {
+        REQUIRE_FALSE(leds_tester.set_gs_data(16, preset_gs_test_off, preset_gs_test_off, preset_gs_test_off));
+    }
+
+    SECTION("GS bit test ON-OFF-OFF")
+    {
+        // Example Byte Mapping
+        // ROW #1
+        // GS            B15             G15             R15              B14             G14             R14            B13             G13             R13   
+        // bits    0[==============][==============][==============][==============][==============][==============][==============][==============][==============]
+        // Bytes   [======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][
+        //            #0      #1      #2      #3      #4      #5      #6      #7      #8      #9     #10     #11     #12     #13      #14     #15     #16     #17
+        for (uint16_t led_idx = 0; led_idx < 16; led_idx++)
+        {
+            // Bx LED
+            leds_tester.flush_common_register();
+            REQUIRE(leds_tester.set_gs_data(led_idx, preset_gs_test_on, preset_gs_test_off, preset_gs_test_off));
+
+            uint16_t byte_idx = led_idx * 6;
+            REQUIRE(leds_tester.get_common_reg_at(byte_idx, result));
+            REQUIRE(result == 0b01111111);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0b11111111);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0b10000000);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0b00000000);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0b00000000);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0b00000000);
+        }
+    }
+    SECTION("GS bit test OFF-ON-OFF")
+    {
+        // Example Byte Mapping
+        // ROW #1
+        // GS            B15             G15             R15              B14             G14             R14            B13             G13             R13   
+        // bits    0[==============][==============][==============][==============][==============][==============][==============][==============][==============]
+        // Bytes   [======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][
+        //            #0      #1      #2      #3      #4      #5      #6      #7      #8      #9     #10     #11     #12     #13      #14     #15     #16     #17
+        
+        for (uint16_t led_idx = 0; led_idx < 16; led_idx++)
+        {
+            // Gx LED
+            leds_tester.flush_common_register();
+            REQUIRE(leds_tester.set_gs_data(led_idx, preset_gs_test_off, preset_gs_test_on, preset_gs_test_off));
+
+            uint16_t byte_idx = led_idx * 6;
+            REQUIRE(leds_tester.get_common_reg_at(byte_idx, result));
+            REQUIRE(result == 0b0000'0000);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0b0000'0000);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0b0111'1111);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0b1111'1111);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0b1000'0000);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0b0000'0000);
+        }
+    }
+
+    SECTION("GS bit test OFF-OFF-ON")
+    {
+        // Example Byte Mapping
+        // ROW #1
+        // GS            B15             G15             R15              B14             G14             R14            B13             G13             R13   
+        // bits    0[==============][==============][==============][==============][==============][==============][==============][==============][==============]
+        // Bytes   [======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][
+        //            #0      #1      #2      #3      #4      #5      #6      #7      #8      #9     #10     #11     #12     #13      #14     #15     #16     #17
+
+        for (uint16_t led_idx = 0; led_idx < 16; led_idx++)
+        {
+            // Rx LED
+            leds_tester.flush_common_register();
+            REQUIRE(leds_tester.set_gs_data(led_idx, preset_gs_test_off, preset_gs_test_off, preset_gs_test_on));
+
+            uint16_t byte_idx = led_idx * 6;
+            REQUIRE(leds_tester.get_common_reg_at(byte_idx, result));
+            REQUIRE(result == 0b0000'0000);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0b0000'0000);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0b0000'0000);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0b0000'0000);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0b0111'1111);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0b1111'1111);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result)); // MSB of byte #97
+            REQUIRE(result == 0b1000'0000);
+
+        }
+    }
+
+    SECTION("GS bit test ON-ON-ON")
+    {
+        // Example Byte Mapping
+        // ROW #1
+        // GS            B15             G15             R15              B14             G14             R14            B13             G13             R13   
+        // bits    0[==============][==============][==============][==============][==============][==============][==============][==============][==============]
+        // Bytes   [======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][
+        //            #0      #1      #2      #3      #4      #5      #6      #7      #8      #9     #10     #11     #12     #13      #14     #15     #16     #17
+        for (uint16_t led_idx = 0; led_idx < 16; led_idx++)
+        {
+            // Bx LED
+            leds_tester.flush_common_register();
+            REQUIRE(leds_tester.set_gs_data(led_idx, preset_gs_test_on, preset_gs_test_on, preset_gs_test_on));
+
+            uint16_t byte_idx = led_idx * 6;
+            REQUIRE(leds_tester.get_common_reg_at(byte_idx, result));
+            REQUIRE(result == 0x7F);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0xFF);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0xFF);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0xFF);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0xFF);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0xFF);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result)); // MSB of byte #97
+            REQUIRE(result == 0x80);
+        }
+    }
+
+    SECTION("GS bit test OFF-OFF-OFF")
+    {
+        // Example Byte Mapping
+        // ROW #1
+        // GS            B15             G15             R15              B14             G14             R14            B13             G13             R13   
+        // bits    0[==============][==============][==============][==============][==============][==============][==============][==============][==============]
+        // Bytes   [======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][
+        //            #0      #1      #2      #3      #4      #5      #6      #7      #8      #9     #10     #11     #12     #13      #14     #15     #16     #17
+
+        for (uint16_t led_idx = 0; led_idx < 16; led_idx++)
+        {
+            // Bx LED
+            leds_tester.flush_common_register();
+            REQUIRE(leds_tester.set_gs_data(led_idx, preset_gs_test_off, preset_gs_test_off, preset_gs_test_off));
+
+            uint16_t byte_idx = led_idx * 6;
+            REQUIRE(leds_tester.get_common_reg_at(byte_idx, result));
+            REQUIRE(result == 0x00);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0x00);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0x00);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0x00);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0x00);
+            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
+            REQUIRE(result == 0x00);
+        }
+    }
+
+
+}
+
+
 // @brief Testing tlc5955::Driver::set_dc_data()
 TEST_CASE("Dot Correction bit tests", "[tlc5955]")
 {

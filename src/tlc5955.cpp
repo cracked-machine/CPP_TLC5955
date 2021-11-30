@@ -797,9 +797,9 @@ bool Driver::set_dc_data(
 }
 
 void Driver::set_all_dc_data(
-    std::bitset<m_dc_data_resolution> &blue_value, 
-    std::bitset<m_dc_data_resolution> &green_value, 
-    std::bitset<m_dc_data_resolution> &red_value)
+    const std::bitset<m_dc_data_resolution> &blue_value, 
+    const std::bitset<m_dc_data_resolution> &green_value, 
+    const std::bitset<m_dc_data_resolution> &red_value)
 {
     for (uint8_t led_idx = 0; led_idx < m_num_leds_per_chip; led_idx++)
     {
@@ -809,11 +809,11 @@ void Driver::set_all_dc_data(
 
 bool Driver::set_gs_data(
     uint8_t led_idx, 
-    std::bitset<m_gs_data_resolution> &blue_value, 
-    std::bitset<m_gs_data_resolution> &green_value, 
-    std::bitset<m_gs_data_resolution> &red_value)
+    const std::bitset<m_gs_data_resolution> &blue_value, 
+    const std::bitset<m_gs_data_resolution> &green_value, 
+    const std::bitset<m_gs_data_resolution> &red_value)
 {
-    if (led_idx >= m_num_driver_ics)
+    if (led_idx >= m_num_leds_per_chip)
     {
         return false;
     }
@@ -823,46 +823,101 @@ bool Driver::set_gs_data(
     // the current bit position within the GS section of the common register, starting at the section offset + LED offset
     uint16_t gs_common_pos = m_gs_data_offset + led_offset;
 
-    // add each blue_value bit into the BC section of the common register
-    for (uint8_t idx = 0; idx < blue_value.size(); idx++)
+    // check gs_common_pos has left enough bits for one segment of LED GS data
+    // This could happen if the header constants are incorrect
+    if (gs_common_pos + m_gs_data_one_led_size_bits > m_common_reg_size_bits)
     {
-        // make sure we stay within bounds of the common register
-        if (gs_common_pos < m_common_reg_size_bits) 
-        {
-           m_common_bit_register.set(gs_common_pos, blue_value[idx]);
-           gs_common_pos++;
-        }
-    }    
+        return false;
+    }
 
-    // add each green_value bit into the GS section of the common register
-    for (uint8_t idx = 0; idx < green_value.size(); idx++)
-    {
-        // make sure we stay within bounds of the common register
-        if (gs_common_pos < m_common_reg_size_bits) 
-        {
-           m_common_bit_register.set(gs_common_pos, green_value[idx]);
-           gs_common_pos++;
-        }
-    }    
+        // ROW #1
+        // GS            B15             G15             R15              B14             G14             R14            B13             G13             R13   
+        // bits    0[==============][==============][==============][==============][==============][==============][==============][==============][==============]
+        // Bytes   [======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][
+        //            #0      #1      #2      #3      #4      #5      #6      #7      #8      #9     #10     #11     #12     #13      #14     #15     #16     #17
 
-    // add each red_value bit into the GS section of the common register
-    for (uint8_t idx = 0; idx < red_value.size(); idx++)
-    {
-        // make sure we stay within bounds of the common register
-        if (gs_common_pos < m_common_reg_size_bits) 
-        {
-           m_common_bit_register.set(gs_common_pos, red_value[idx]);
-           gs_common_pos++;
-        }
-    }    
+
+    // set the bits
+    
+    // should always give multiple of 6.
+    uint16_t begin_byte_idx = gs_common_pos / 8;
+    
+
+    // byte #0, skip the MSB 
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 6, blue_value.test(15));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 5, blue_value.test(14));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 4, blue_value.test(13));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 3, blue_value.test(12));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 2, blue_value.test(11));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 1, blue_value.test(10));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 0, blue_value.test(9));
+
+    // byte #1
+    begin_byte_idx++;
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 7, blue_value.test(8));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 6, blue_value.test(7));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 5, blue_value.test(6));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 4, blue_value.test(5));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 3, blue_value.test(4));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 2, blue_value.test(3));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 1, blue_value.test(2));    
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 0, blue_value.test(1)); 
+
+    // byte #2
+    begin_byte_idx++;
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 7, blue_value.test(0));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 6, green_value.test(15));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 5, green_value.test(14));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 4, green_value.test(13));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 3, green_value.test(12));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 2, green_value.test(11));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 1, green_value.test(10));    
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 0, green_value.test(9));     
+
+    // byte #3
+    begin_byte_idx++;
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 7, green_value.test(8));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 6, green_value.test(7));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 5, green_value.test(6));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 4, green_value.test(5));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 3, green_value.test(4));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 2, green_value.test(3));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 1, green_value.test(2));    
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 0, green_value.test(1)); 
+
+    // byte #4
+    begin_byte_idx++;
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 7, green_value.test(0));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 6, red_value.test(15));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 5, red_value.test(14));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 4, red_value.test(13));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 3, red_value.test(12));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 2, red_value.test(11));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 1, red_value.test(10));    
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 0, red_value.test(9)); 
+
+    // byte #5
+    begin_byte_idx++;
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 7, red_value.test(8));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 6, red_value.test(7));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 5, red_value.test(6));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 4, red_value.test(5));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 3, red_value.test(4));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 2, red_value.test(3));
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 1, red_value.test(2));    
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 0, red_value.test(1));
+
+    // byte #5, write the final bit
+    begin_byte_idx++;
+    set_value_nth_bit(m_common_byte_register[begin_byte_idx], 7, red_value.test(0));
 
     return true;
 }
 
 void Driver::set_all_gs_data(
-    std::bitset<m_gs_data_resolution> &blue_value, 
-    std::bitset<m_gs_data_resolution> &green_value, 
-    std::bitset<m_gs_data_resolution> &red_value)
+    const std::bitset<m_gs_data_resolution> &blue_value, 
+    const std::bitset<m_gs_data_resolution> &green_value, 
+    const std::bitset<m_gs_data_resolution> &red_value)
 {
     for (uint8_t led_idx = 0; led_idx < m_num_leds_per_chip; led_idx++)
     {
