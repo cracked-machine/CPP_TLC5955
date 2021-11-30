@@ -9,140 +9,6 @@
 namespace tlc5955 
 {
 
-uint16_t Driver::startup_tests()
-{
-    // latch bit test
-    if (m_common_byte_register[0] != 0b00000000) built_in_test_fail++;       
-    set_control_bit(true);
-    if (m_common_byte_register[0] != 0b10000000) built_in_test_fail++;      // 128
-    
-    // control byte test
-
-    // Ctrl      10010110  
-    // bits      [======]
-    // Bytes     ======][
-    //             #0    #1
-
-    set_ctrl_cmd_bits();
-    if (m_common_byte_register[0] != 0b11001011) built_in_test_fail++;      // 203
-
-    // padding bits test - bytes 1-48 should be empty
-    set_padding_bits();
-    for (uint8_t idx = 1; idx < 49; idx++)
-    {
-        if (m_common_byte_register[idx] != 0) { built_in_test_fail++; }
-    }
-
-    // function bits test   
-    // bits      [===]
-    //           =][==
-    // Bytes   #49  #50
-
-    set_function_data(true, false, false, false, false);    
-    if (m_common_byte_register[49] != 0b00000010) built_in_test_fail++;   // 2
-    set_function_data(true, true, false, false, false);
-    if (m_common_byte_register[49] != 0b00000011) built_in_test_fail++;   // 3
-    set_function_data(true, true, true, false, false);
-    if (m_common_byte_register[50] != 0b10000000) built_in_test_fail++;   // 128
-    set_function_data(true, true, true, true, false);
-    if (m_common_byte_register[50] != 0b11000000) built_in_test_fail++;   // 192
-    set_function_data(true, true, true, true, true);
-    if (m_common_byte_register[50] != 0b11100000) built_in_test_fail++;   // 224
-
-    // BC bits test
-    // BC         blue   green   red
-    // bits      [=====][=====][=====]
-    // bits      ====][======][======]
-    // Bytes     #50    #51      #52
-
-    std::bitset<m_bc_data_resolution> bc_test_on {127};
-    std::bitset<m_bc_data_resolution> bc_test_off {0};
-
-    if (m_common_byte_register[50] != 0b11100000) built_in_test_fail++;     // 224
-    if (m_common_byte_register[51] != 0b00000000) built_in_test_fail++;  
-    if (m_common_byte_register[52] != 0b00000000) built_in_test_fail++;   
-
-    set_bc_data(bc_test_on, bc_test_off, bc_test_off);
-    if (m_common_byte_register[50] != 0b11111111) built_in_test_fail++;     // 255
-    if (m_common_byte_register[51] != 0b11000000) built_in_test_fail++;     // 192
-    if (m_common_byte_register[52] != 0x00000000) built_in_test_fail++;   
-
-    set_bc_data(bc_test_off, bc_test_on, bc_test_off);
-    if (m_common_byte_register[50] != 0b11100000) built_in_test_fail++;     // 224
-    if (m_common_byte_register[51] != 0b00111111) built_in_test_fail++;     // 63
-    if (m_common_byte_register[52] != 0b10000000) built_in_test_fail++;     // 128
-    
-    set_bc_data(bc_test_off, bc_test_off, bc_test_on);
-    if (m_common_byte_register[50] != 0b11100000) built_in_test_fail++;     // 224
-    if (m_common_byte_register[51] != 0x00000000) built_in_test_fail++;   
-    if (m_common_byte_register[52] != 0b01111111) built_in_test_fail++;     // 127
-
-    set_bc_data(bc_test_off, bc_test_off, bc_test_off);
-    if (m_common_byte_register[50] != 0b11100000) built_in_test_fail++;     // 224
-    if (m_common_byte_register[51] != 0b00000000) built_in_test_fail++;   
-    if (m_common_byte_register[52] != 0b00000000) built_in_test_fail++;    
-
-    set_bc_data(bc_test_on, bc_test_on, bc_test_on);
-    if (m_common_byte_register[50] != 0b11111111) built_in_test_fail++;     // 255
-    if (m_common_byte_register[51] != 0b11111111) built_in_test_fail++;     // 255
-    if (m_common_byte_register[52] != 0b11111111) built_in_test_fail++;     // 255   
-
-    // MC         B  G  R
-    // bits      [=][=][=]
-    // bits      [======][
-    // Bytes       #53    #54
-
-    std::bitset<m_mc_data_resolution> mc_test_on {7};
-    std::bitset<m_mc_data_resolution> mc_test_off {0};
-    set_mc_data(mc_test_on, mc_test_off, mc_test_off);
-    if (m_common_byte_register[53] != 0b11100000) built_in_test_fail++;     // 224
-    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     // 0
-    set_mc_data(mc_test_off, mc_test_on, mc_test_off);
-    if (m_common_byte_register[53] != 0b00011100) built_in_test_fail++;     // 28
-    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     // 0
-    set_mc_data(mc_test_off, mc_test_off, mc_test_on);
-    if (m_common_byte_register[53] != 0b00000011) built_in_test_fail++;     // 3
-    if (m_common_byte_register[54] != 0b10000000) built_in_test_fail++;     // 128
-
-    set_mc_data(mc_test_off, mc_test_off, mc_test_off);
-    if (m_common_byte_register[53] != 0b00000000) built_in_test_fail++;     
-    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     
-
-    std::bitset<m_mc_data_resolution> mc_test_blue {1};
-    std::bitset<m_mc_data_resolution> mc_test_green {1};
-    std::bitset<m_mc_data_resolution> mc_test_red {1};
-    set_mc_data(mc_test_off, mc_test_off, mc_test_red);   
-    if (m_common_byte_register[53] != 0b00000000) built_in_test_fail++;     // 0   
-    if (m_common_byte_register[54] != 0b10000000) built_in_test_fail++;     // 128
-    set_mc_data(mc_test_off, mc_test_off, mc_test_red <<= 1);
-    if (m_common_byte_register[53] != 0b00000001) built_in_test_fail++;     // 1
-    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     // 0
-    set_mc_data(mc_test_off, mc_test_off, mc_test_red <<= 1);
-    if (m_common_byte_register[53] != 0b00000010) built_in_test_fail++;     // 2
-    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     // 0
-    set_mc_data(mc_test_off, mc_test_green, mc_test_red <<= 1);
-    if (m_common_byte_register[53] != 0b00000100) built_in_test_fail++;     // 4
-    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     // 0
-    set_mc_data(mc_test_off, mc_test_green <<= 1, mc_test_red);
-    if (m_common_byte_register[53] != 0b00001000) built_in_test_fail++;     // 8
-    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     // 0
-    set_mc_data(mc_test_off, mc_test_green <<= 1, mc_test_red);
-    if (m_common_byte_register[53] != 0b00010000) built_in_test_fail++;     // 16
-    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     // 0
-    set_mc_data(mc_test_blue, mc_test_green <<= 1, mc_test_red);
-    if (m_common_byte_register[53] != 0b00100000) built_in_test_fail++;     // 32
-    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     // 0    
-    set_mc_data(mc_test_blue <<= 1, mc_test_green, mc_test_red);
-    if (m_common_byte_register[53] != 0b01000000) built_in_test_fail++;     // 64
-    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     // 0    
-    set_mc_data(mc_test_blue <<= 1, mc_test_green, mc_test_red);
-    if (m_common_byte_register[53] != 0b10000000) built_in_test_fail++;     // 128
-    if (m_common_byte_register[54] != 0b00000000) built_in_test_fail++;     // 0    
-
-
-
-    return built_in_test_fail;
-}
 
 void Driver::set_value_nth_bit(uint8_t &target, uint16_t target_idx, bool value)
 {
@@ -230,6 +96,7 @@ void Driver::set_padding_bits()
 
 }
 
+
 void Driver::set_function_data(bool DSPRPT, bool TMGRST, bool RFRESH, bool ESPWM, bool LSDVLT)
 { 
 
@@ -246,7 +113,8 @@ void Driver::set_function_data(bool DSPRPT, bool TMGRST, bool RFRESH, bool ESPWM
     set_value_nth_bit(m_common_byte_register[50], 5, LSDVLT);
 }
 
-void Driver::set_bc_data(std::bitset<m_bc_data_resolution> &blue_value, 
+void Driver::set_bc_data(
+    std::bitset<m_bc_data_resolution> &blue_value, 
     std::bitset<m_bc_data_resolution> &green_value, 
     std::bitset<m_bc_data_resolution> &red_value)
 {
@@ -285,7 +153,8 @@ void Driver::set_bc_data(std::bitset<m_bc_data_resolution> &blue_value,
 
 }
 
-void Driver::set_mc_data(const std::bitset<m_mc_data_resolution> &blue_value, 
+void Driver::set_mc_data(
+    const std::bitset<m_mc_data_resolution> &blue_value, 
     const std::bitset<m_mc_data_resolution> green_value, 
     const std::bitset<m_mc_data_resolution> &red_value)
 {
@@ -311,12 +180,14 @@ void Driver::set_mc_data(const std::bitset<m_mc_data_resolution> &blue_value,
 
 }
 
-void Driver::set_dc_data(const uint8_t led_idx, const std::bitset<m_dc_data_resolution> &blue_value, 
+void Driver::set_dc_data(
+    const uint8_t led_idx, 
+    const std::bitset<m_dc_data_resolution> &blue_value, 
     const std::bitset<m_dc_data_resolution> &green_value, 
     const std::bitset<m_dc_data_resolution> &red_value)
 {
 
-    // The DC data is written in descending order.
+    // The switch cases are arranged in descending byte order: 15 -> 0.
     // Because the tlc5955 common register overlaps byte boundaries of the buffer all loops are unrolled.
     // This looks a bit nuts but it makes it easier to read and debug rather than a series of disjointed loops.
 
@@ -674,7 +545,7 @@ void Driver::set_dc_data(const uint8_t led_idx, const std::bitset<m_dc_data_reso
         //          #75     #76     #77     #78     #79     #80     #81     #82     #83     #84     #85
 
             // LED B6
-            set_value_nth_bit(m_common_byte_register[byte_idx=78], 1, blue_value.test(6));
+            set_value_nth_bit(m_common_byte_register[byte_idx=77], 1, blue_value.test(6));
             set_value_nth_bit(m_common_byte_register[byte_idx], 0, blue_value.test(5));
             set_value_nth_bit(m_common_byte_register[byte_idx=78],  7, blue_value.test(4));
             set_value_nth_bit(m_common_byte_register[byte_idx], 6, blue_value.test(3));
@@ -921,7 +792,8 @@ void Driver::set_dc_data(const uint8_t led_idx, const std::bitset<m_dc_data_reso
 
 }
 
-void Driver::set_all_dc_data(std::bitset<m_dc_data_resolution> &blue_value, 
+void Driver::set_all_dc_data(
+    std::bitset<m_dc_data_resolution> &blue_value, 
     std::bitset<m_dc_data_resolution> &green_value, 
     std::bitset<m_dc_data_resolution> &red_value)
 {
@@ -931,7 +803,11 @@ void Driver::set_all_dc_data(std::bitset<m_dc_data_resolution> &blue_value,
     }
 }
 
-void Driver::set_gs_data(uint8_t led_pos, std::bitset<16> &blue_value, std::bitset<16> &green_value, std::bitset<16> &red_value)
+void Driver::set_gs_data(
+    uint8_t led_pos, 
+    std::bitset<16> &blue_value, 
+    std::bitset<16> &green_value, 
+    std::bitset<16> &red_value)
 {
     // offset for the current LED position
     const uint16_t led_offset = m_gs_data_one_led_size_bits * led_pos;
@@ -973,7 +849,8 @@ void Driver::set_gs_data(uint8_t led_pos, std::bitset<16> &blue_value, std::bits
     }    
 }
 
-void Driver::set_all_gs_data(std::bitset<m_gs_data_resolution> &blue_value, 
+void Driver::set_all_gs_data(
+    std::bitset<m_gs_data_resolution> &blue_value, 
     std::bitset<m_gs_data_resolution> &green_value, 
     std::bitset<m_gs_data_resolution> &red_value)
 {
@@ -1008,7 +885,10 @@ void Driver::toggle_latch()
 
 void Driver::flush_common_register()
 {
-    m_common_bit_register.reset();
+    for (auto &byte : m_common_byte_register)
+    {
+        byte = 0x00;
+    }
     send_data();
 }
 
