@@ -4,6 +4,7 @@
 #include <catch2/catch_all.hpp>
 #include <iostream>
 #include <tlc5955_tester.hpp>
+#include <algorithm>
 
 // TLC5955 device datasheet:
 // https://www.ti.com/lit/ds/symlink/tlc5955.pdf
@@ -15,6 +16,27 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
     tlc5955::tlc5955_tester leds_tester;
     uint8_t result {0};
     
+    // @brief Testing tlc5955::Driver::flush_common_register()
+    SECTION("Test flush command")
+    {
+        // set all the bits to 1
+        std::for_each (leds_tester.data_begin(), leds_tester.data_end(), [](auto &byte){
+            byte = 0xFF;
+        });
+
+        // check they are set to 1
+        std::for_each (leds_tester.data_begin(), leds_tester.data_end(), [](auto &byte){
+            REQUIRE(byte == 0xFF);
+        });
+
+        // run the flush command
+        leds_tester.flush_common_register();
+
+        // check the bits are all cleared
+        std::for_each (leds_tester.data_begin(), leds_tester.data_end(), [](auto &byte){
+            REQUIRE(byte == 0x00);
+        });
+    }
 
     // @brief Testing tlc5955::Driver::set_control_bit
     SECTION("Latch bit test")
