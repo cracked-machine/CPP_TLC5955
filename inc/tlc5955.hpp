@@ -48,15 +48,30 @@ public:
     // When this bit is 1, the LSD voltage is VCC × 90%. See 8.3.5 "LED Short Detection (LSD)"
     void set_function_data(bool DSPRPT, bool TMGRST, bool RFRESH, bool ESPWM, bool LSDVLT);
   
+    // @brief Write the Global BC (Bright Control) data to the common register.
+    // https://www.ti.com/lit/ds/symlink/tlc5955.pdf
+    // @param blue_value The 7-bit word for blue BC
+    // @param green_value The 7-bit word for green BC
+    // @param red_value The 7-bit word for red BC    
     void set_bc_data(std::bitset<m_bc_data_resolution> &blue_value, 
         std::bitset<m_bc_data_resolution> &green_value, 
         std::bitset<m_bc_data_resolution> &red_value);
 
+    // @brief Write the MC (Max Current) data to the common register
+    // https://www.ti.com/lit/ds/symlink/tlc5955.pdf
+    // @param blue_value The 3-bit word for blue MC
+    // @param green_value The 3-bit word for green MC
+    // @param red_value The 3-bit word for red MC
     void set_mc_data(const std::bitset<m_mc_data_resolution> &blue_value, 
         const std::bitset<m_mc_data_resolution> green_value, 
         const std::bitset<m_mc_data_resolution> &red_value);
 
-    // set the individual LED position to the DC values
+    // @brief Write the DC (dot correction) data to the common register for the specified LED
+    // https://www.ti.com/lit/ds/symlink/tlc5955.pdf
+    // @param led_idx The selected LED
+    // @param blue_value The 7-bit word for blue DC
+    // @param green_value The 7-bit word for green DC
+    // @param red_value The 7-bit word for red DC
     void set_dc_data(uint8_t led_idx, const std::bitset<m_dc_data_resolution> &blue_value, 
     const std::bitset<m_dc_data_resolution> &green_value, 
     const std::bitset<m_dc_data_resolution> &red_value);
@@ -66,8 +81,14 @@ public:
         std::bitset<m_dc_data_resolution> &green_value, 
         std::bitset<m_dc_data_resolution> &red_value);
 
-    // set the individual LED position to the GS values
-    void set_gs_data(uint8_t led_pos, std::bitset<m_gs_data_resolution> &blue_value, 
+    // @brief Write the GS (Grey Scale) data to the common register for the specified LED
+    // @param led_pos The selected LED
+    // @param blue_value The 16-bit word for blue GS
+    // @param green_value The 16-bit word for green GS
+    // @param red_value The 16-bit word for red GS
+    void set_gs_data(
+        uint8_t led_pos, 
+        std::bitset<m_gs_data_resolution> &blue_value, 
         std::bitset<m_gs_data_resolution> &green_value, 
         std::bitset<m_gs_data_resolution> &red_value);
 
@@ -76,18 +97,17 @@ public:
         std::bitset<m_gs_data_resolution> &green_value, 
         std::bitset<m_gs_data_resolution> &red_value);
 
+    // @brief Send the data via SPI bus and toggle the latch pin
     void send_data();
     
-
-    // void flush_common_register();
+    // @brief Clears (zeroize) the common register and call send_data()
     void flush_common_register();
 
     // @brief toggle the latch pin terminal
     void toggle_latch();
 
+    // @brief Helper function to print bytes as decimal values to RTT. USE_RTT must be defined.
     void print_common_bits();
-
-    uint16_t startup_tests();
 
 protected:
 
@@ -137,11 +157,12 @@ private:
     static constexpr uint16_t m_mc_data_offset {static_cast<uint16_t>(m_bc_data_offset + m_bc_data_section_size_bits)};     // 424U
     static constexpr uint16_t m_dc_data_offset {static_cast<uint16_t>(m_mc_data_offset + m_mc_data_section_size_bits)};     // 433U
 
+    // @brief Helper function to set/clear one bit of one byte in the common register byte array
+    // @param target The targetted byte in the common register
+    // @param target_idx The bit within that byte to be set/cleared
+    // @param value The boolean value to set at the bit target_idx
     void set_value_nth_bit(uint8_t &target, uint16_t target_idx, bool value);
 
-
-
-    
     
     std::bitset<m_common_reg_size_bits> m_common_bit_register{0};
 
