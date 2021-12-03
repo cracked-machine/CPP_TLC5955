@@ -170,10 +170,10 @@ private:
     static constexpr uint16_t m_dc_data_offset {static_cast<uint16_t>(m_mc_data_offset + m_mc_data_section_size_bits)};     // 433U
 
     // @brief Helper function to set/clear one bit of one byte in the common register byte array
-    // @param target The targetted byte in the common register
-    // @param target_idx The bit within that byte to be set/cleared
-    // @param value The boolean value to set at the bit target_idx
-    void set_value_nth_bit(uint8_t &target, uint16_t target_idx, bool value);
+    // @param byte The targetted byte in the common register
+    // @param bit The bit within that byte to be set/cleared
+    // @param _new_value The boolean value to set at the bit target_idx
+    void set_value_nth_bit(uint8_t &byte, uint16_t bit, bool new_value);
 
     
     std::bitset<m_common_reg_size_bits> m_common_bit_register{0};

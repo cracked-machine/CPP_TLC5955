@@ -10,10 +10,10 @@ namespace tlc5955
 {
 
 
-void Driver::set_value_nth_bit(uint8_t &target, uint16_t target_idx, bool value)
+void Driver::set_value_nth_bit(uint8_t &byte, uint16_t bit, bool new_value)
 {
-    if (value) { target |= (1U << target_idx); }
-    else { target &= ~(1U << target_idx); }
+    if (new_value) { byte |= (1U << bit); }
+    else { byte &= ~(1U << bit); }
     print_common_bits(); 
 }
 
