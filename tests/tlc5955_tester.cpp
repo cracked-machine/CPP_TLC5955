@@ -1,20 +1,22 @@
 
 #include <tlc5955_tester.hpp>
-
+#include <catch2/catch_all.hpp>
 #include <iomanip>
 
 namespace tlc5955 {
 
-bool tlc5955_tester::get_common_reg_at(uint16_t idx, uint8_t &value)
+
+uint8_t tlc5955_tester::get_common_reg_at(uint16_t idx)
 {
     if (idx > m_common_reg_size_bytes)
     {
         std::cout << "Error at tlc5955_tester::get_common_reg_at() - out of bounds! Max is " 
             << +m_common_reg_size_bytes << ", received " << idx << std::endl;
-        return false;
+        REQUIRE(false);
+        return 0;
     }
-    value = m_common_byte_register.at(idx);
-    return true;
+    return m_common_byte_register.at(idx);
+
 }
 
 void tlc5955_tester::print_register(bool dec_format, bool hex_format)

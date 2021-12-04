@@ -18,7 +18,7 @@ public:
     // @brief alias for common register std::array
     using data_t = std::array<uint8_t, Driver::m_common_reg_size_bytes>;
 
-    bool get_common_reg_at(uint16_t idx, uint8_t &value);
+    uint8_t get_common_reg_at(uint16_t idx);
     void print_register(bool dec_format, bool hex_format);
     data_t::iterator data_begin();
     data_t::iterator data_end();

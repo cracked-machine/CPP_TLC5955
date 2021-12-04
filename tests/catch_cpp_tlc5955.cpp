@@ -14,7 +14,7 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
 {
 
     tlc5955::tlc5955_tester leds_tester;
-    uint8_t result {0};
+
     
     // @brief Testing tlc5955::Driver::flush_common_register()
     SECTION("Test flush command")
@@ -47,13 +47,11 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
         //          #0          
         // latch bit test
         
-        REQUIRE(leds_tester.get_common_reg_at(0, result));
-        REQUIRE(result == 0b00000000);   
+        REQUIRE(+leds_tester.get_common_reg_at(0) == 0b00000000);   
 
         leds_tester.set_control_bit(true);
 
-        REQUIRE(leds_tester.get_common_reg_at(0, result));
-        REQUIRE(result == 0b10000000);      // 128
+        REQUIRE(+leds_tester.get_common_reg_at(0) == 0b10000000);      // 128
     }
 
     // @brief Testing tlc5955::Driver::set_ctrl_cmd_bits()
@@ -67,8 +65,14 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
         //             #0    #1
 
         leds_tester.set_ctrl_cmd_bits();
-        REQUIRE(leds_tester.get_common_reg_at(0, result));
-        REQUIRE(result == 0b1001011);      // 75
+        REQUIRE(+leds_tester.get_common_reg_at(0) == 0b1001011);      // 75
+
+        // clear the previous test
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(50) == 0b00000000);  
+        REQUIRE(+leds_tester.get_common_reg_at(51) == 0b00000000); 
+        REQUIRE(+leds_tester.get_common_reg_at(52) == 0b00000000);        
+
     }
 
     // Testing tlc5955::Driver::set_padding_bits()
@@ -79,8 +83,7 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
         leds_tester.set_padding_bits();
         for (uint8_t idx = 1; idx < 49; idx++)
         {
-            REQUIRE(leds_tester.get_common_reg_at(idx,result));
-            REQUIRE(result == 0);
+            REQUIRE(+leds_tester.get_common_reg_at(idx) == 0);
         }
     }
 
@@ -93,24 +96,26 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
         // Bytes   #49  #50
 
         leds_tester.set_function_data(true, false, false, false, false);
-        REQUIRE(leds_tester.get_common_reg_at(49, result));
-        REQUIRE(result == 0b00000010);  // 2
+        REQUIRE(+leds_tester.get_common_reg_at(49) == 0b00000010);  // 2
         
         leds_tester.set_function_data(true, true, false, false, false);
-        REQUIRE(leds_tester.get_common_reg_at(49, result));
-        REQUIRE(result == 0b00000011);  // 3
+        REQUIRE(+leds_tester.get_common_reg_at(49) == 0b00000011);  // 3
                         
         leds_tester.set_function_data(true, true, true, false, false);
-        REQUIRE(leds_tester.get_common_reg_at(50, result));
-        REQUIRE(result == 0b10000000);  // 128
+        REQUIRE(+leds_tester.get_common_reg_at(50) == 0b10000000);  // 128
         
         leds_tester.set_function_data(true, true, true, true, false);
-        REQUIRE(leds_tester.get_common_reg_at(50, result));
-        REQUIRE(result == 0b11000000);  // 192
+        REQUIRE(+leds_tester.get_common_reg_at(50) == 0b11000000);  // 192
 
         leds_tester.set_function_data(true, true, true, true, true);
-        REQUIRE(leds_tester.get_common_reg_at(50, result));
-        REQUIRE(result == 0b11100000);  // 224
+        REQUIRE(+leds_tester.get_common_reg_at(50) == 0b11100000);  // 224
+
+        // clear the previous test
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(50) == 0b00000000);  
+        REQUIRE(+leds_tester.get_common_reg_at(51) == 0b00000000); 
+        REQUIRE(+leds_tester.get_common_reg_at(52) == 0b00000000);        
+
     }
     
     // @brief Testing tlc5955::Driver::set_bc_data()
@@ -122,57 +127,43 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
         // bits      ====][======][======]
         // Bytes     #50    #51      #52    
 
-        std::bitset<leds_tester.m_bc_data_resolution> bc_test_on {127};
-        std::bitset<leds_tester.m_bc_data_resolution> bc_test_off {0};
+        const std::bitset<leds_tester.m_bc_data_resolution> preset_bc_test_pattern_0x55 {0b1010101};
+        const std::bitset<leds_tester.m_bc_data_resolution> preset_bc_test_pattern_0x2A {0b0101010};        
 
-        REQUIRE(leds_tester.get_common_reg_at(50, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(51, result));
-        REQUIRE(result == 0b00000000); 
-        REQUIRE(leds_tester.get_common_reg_at(52, result));
-        REQUIRE(result == 0b00000000);                   
+        // set the bit pattern
+        leds_tester.set_bc_data(
+            preset_bc_test_pattern_0x55, 
+            preset_bc_test_pattern_0x2A, 
+            preset_bc_test_pattern_0x55);            
+      
+        REQUIRE(+leds_tester.get_common_reg_at(50) == 0b00010101);  
+        REQUIRE(+leds_tester.get_common_reg_at(51) == 0b01010101); 
+        REQUIRE(+leds_tester.get_common_reg_at(52) == 0b01010101);    
 
-        leds_tester.set_bc_data(bc_test_on, bc_test_off, bc_test_off);
-        REQUIRE(leds_tester.get_common_reg_at(50, result));
-        REQUIRE(result == 0b00011111);  
-        REQUIRE(leds_tester.get_common_reg_at(51, result));
-        REQUIRE(result == 0b11000000); 
-        REQUIRE(leds_tester.get_common_reg_at(52, result));
-        REQUIRE(result == 0x00000000);         
- 
-        leds_tester.set_bc_data(bc_test_off, bc_test_on, bc_test_off);
-        REQUIRE(leds_tester.get_common_reg_at(50, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(51, result));
-        REQUIRE(result == 0b00111111); 
-        REQUIRE(leds_tester.get_common_reg_at(52, result));
-        REQUIRE(result == 0b10000000);         
+        // clear the previous test
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(50) == 0b00000000);  
+        REQUIRE(+leds_tester.get_common_reg_at(51) == 0b00000000); 
+        REQUIRE(+leds_tester.get_common_reg_at(52) == 0b00000000);    
 
-        leds_tester.set_bc_data(bc_test_off, bc_test_off, bc_test_on);
-        REQUIRE(leds_tester.get_common_reg_at(50, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(51, result));
-        REQUIRE(result == 0x00000000); 
-        REQUIRE(leds_tester.get_common_reg_at(52, result));
-        REQUIRE(result == 0b01111111);
- 
-        leds_tester.set_bc_data(bc_test_off, bc_test_off, bc_test_off);
-        REQUIRE(leds_tester.get_common_reg_at(50, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(51, result));
-        REQUIRE(result == 0x00000000); 
-        REQUIRE(leds_tester.get_common_reg_at(52, result));
-        REQUIRE(result == 0b00000000);        
- 
-        leds_tester.set_bc_data(bc_test_on, bc_test_on, bc_test_on);
-        REQUIRE(leds_tester.get_common_reg_at(50, result));
-        REQUIRE(result == 0b00011111);  
-        REQUIRE(leds_tester.get_common_reg_at(51, result));
-        REQUIRE(result == 0b11111111); 
-        REQUIRE(leds_tester.get_common_reg_at(52, result));
-        REQUIRE(result == 0b11111111);        
-  
+        // set the inverse bit pattern
+        leds_tester.set_bc_data(
+            preset_bc_test_pattern_0x2A, 
+            preset_bc_test_pattern_0x55, 
+            preset_bc_test_pattern_0x2A);            
+      
+        REQUIRE(+leds_tester.get_common_reg_at(50) == 0b00001010);  
+        REQUIRE(+leds_tester.get_common_reg_at(51) == 0b10101010); 
+        REQUIRE(+leds_tester.get_common_reg_at(52) == 0b10101010);  
+
+        // clear the previous test
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(50) == 0b00000000);  
+        REQUIRE(+leds_tester.get_common_reg_at(51) == 0b00000000); 
+        REQUIRE(+leds_tester.get_common_reg_at(52) == 0b00000000);        
+
     }
+
     // @brief  Testing tlc5955::Driver::set_mc_data()
     SECTION("Max Current bit test")
     {
@@ -181,100 +172,32 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
         // bits      [======][
         // Bytes       #53    #54     
 
-
-        // @brief Test Preset: all bits of one colour on 
-        std::bitset<leds_tester.m_mc_data_resolution> preset_mc_test_on {7};
-        // @brief Test Preset: all bits of one colour off 
-        std::bitset<leds_tester.m_mc_data_resolution> preset_mc_test_off {0};
-        // @brief Test Preset: blue LSB on, all others off
-        std::bitset<leds_tester.m_mc_data_resolution> preset_mc_test_blue {1};
-        // @brief Test Preset: green LSB on, all others off 
-        std::bitset<leds_tester.m_mc_data_resolution> preset_mc_test_green {1};
-        // @brief Test Preset: red LSB on, all others off 
-        std::bitset<leds_tester.m_mc_data_resolution> preset_mc_test_red {1};
+        const std::bitset<leds_tester.m_mc_data_resolution> preset_mc_test_pattern_0x5 {0b101};
+        const std::bitset<leds_tester.m_mc_data_resolution> preset_mc_test_pattern_0x2 {0b010};
  
-        // blue on full MC, green and red off
-        leds_tester.set_mc_data(preset_mc_test_on, preset_mc_test_off, preset_mc_test_off);
-        REQUIRE(leds_tester.get_common_reg_at(53, result));
-        REQUIRE(result == 0b11100000);                              // 224
-        REQUIRE(leds_tester.get_common_reg_at(54, result));
-        REQUIRE(result == 0b00000000);                              // 0
+        // set bit pattern
+        leds_tester.set_mc_data(
+            preset_mc_test_pattern_0x5, preset_mc_test_pattern_0x2, preset_mc_test_pattern_0x5);
 
-        // green on full MC, blue and red off
-        leds_tester.set_mc_data(preset_mc_test_off, preset_mc_test_on, preset_mc_test_off);
-        REQUIRE(leds_tester.get_common_reg_at(53, result));
-        REQUIRE(result == 0b00011100);                              // 28
-        REQUIRE(leds_tester.get_common_reg_at(54, result));
-        REQUIRE(result == 0b00000000);                              // 0
+        REQUIRE(+leds_tester.get_common_reg_at(53) == 0b10101010);                        // 170
+        REQUIRE(+leds_tester.get_common_reg_at(54) == 0b10000000);                        // 128
+        
+        // clear the previous test
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(53) == 0x00);                              // 0
+        REQUIRE(+leds_tester.get_common_reg_at(54) == 0x00);                              // 0
 
-        // red on full MC, blue and green off
-        leds_tester.set_mc_data(preset_mc_test_off, preset_mc_test_off, preset_mc_test_on);
-        REQUIRE(leds_tester.get_common_reg_at(53, result));
-        REQUIRE(result == 0b00000011);                              // 3
-        REQUIRE(leds_tester.get_common_reg_at(54, result));
-        REQUIRE(result == 0b10000000);                              // 128
+        // set bit pattern
+        leds_tester.set_mc_data(
+            preset_mc_test_pattern_0x2, preset_mc_test_pattern_0x5, preset_mc_test_pattern_0x2);
 
-        // MC off for all colours
-        leds_tester.set_mc_data(preset_mc_test_off, preset_mc_test_off, preset_mc_test_off);
-        REQUIRE(leds_tester.get_common_reg_at(53, result));
-        REQUIRE(result == 0b00000000);                              // 0
-        REQUIRE(leds_tester.get_common_reg_at(54, result));
-        REQUIRE(result == 0b00000000);                              // 0    
+        REQUIRE(+leds_tester.get_common_reg_at(53) == 0b01010101);                        // 85
+        REQUIRE(+leds_tester.get_common_reg_at(54) == 0b00000000);                        // 0
 
-        // left-shift bit MC section from LSB to MSB
-        leds_tester.set_mc_data(preset_mc_test_off, preset_mc_test_off, preset_mc_test_red);   
-        REQUIRE(leds_tester.get_common_reg_at(53, result));
-        REQUIRE(result == 0b00000000);                              // 0
-        REQUIRE(leds_tester.get_common_reg_at(54, result));
-        REQUIRE(result == 0b10000000);                              // 128
-
-        leds_tester.set_mc_data(preset_mc_test_off, preset_mc_test_off, preset_mc_test_red <<= 1);
-        REQUIRE(leds_tester.get_common_reg_at(53, result));
-        REQUIRE(result == 0b00000001);                              // 1
-        REQUIRE(leds_tester.get_common_reg_at(54, result));
-        REQUIRE(result == 0b00000000);                              // 0
-
-        leds_tester.set_mc_data(preset_mc_test_off, preset_mc_test_off, preset_mc_test_red <<= 1);
-        REQUIRE(leds_tester.get_common_reg_at(53, result));
-        REQUIRE(result == 0b00000010);                              // 2
-        REQUIRE(leds_tester.get_common_reg_at(54, result));
-        REQUIRE(result == 0b00000000);                              // 0
-        
-        leds_tester.set_mc_data(preset_mc_test_off, preset_mc_test_green, preset_mc_test_red <<= 1);
-        REQUIRE(leds_tester.get_common_reg_at(53, result));
-        REQUIRE(result == 0b00000100);                              // 4
-        REQUIRE(leds_tester.get_common_reg_at(54, result));
-        REQUIRE(result == 0b00000000);                              // 0
-        
-        leds_tester.set_mc_data(preset_mc_test_off, preset_mc_test_green <<= 1, preset_mc_test_red);
-        REQUIRE(leds_tester.get_common_reg_at(53, result));
-        REQUIRE(result == 0b00001000);                              // 8
-        REQUIRE(leds_tester.get_common_reg_at(54, result));
-        REQUIRE(result == 0b00000000);                              // 0
-        
-        leds_tester.set_mc_data(preset_mc_test_off, preset_mc_test_green <<= 1, preset_mc_test_red);
-        REQUIRE(leds_tester.get_common_reg_at(53, result));
-        REQUIRE(result == 0b00010000);                              // 16
-        REQUIRE(leds_tester.get_common_reg_at(54, result)); 
-        REQUIRE(result == 0b00000000);                              // 0
-        
-        leds_tester.set_mc_data(preset_mc_test_blue, preset_mc_test_green <<= 1, preset_mc_test_red);  
-        REQUIRE(leds_tester.get_common_reg_at(53, result));
-        REQUIRE(result == 0b00100000);                              // 32
-        REQUIRE(leds_tester.get_common_reg_at(54, result));
-        REQUIRE(result == 0b00000000);                              // 0
-        
-        leds_tester.set_mc_data(preset_mc_test_blue <<= 1, preset_mc_test_green, preset_mc_test_red);  
-        REQUIRE(leds_tester.get_common_reg_at(53, result));
-        REQUIRE(result == 0b01000000);                              // 64
-        REQUIRE(leds_tester.get_common_reg_at(54, result));
-        REQUIRE(result == 0b00000000);  
-        
-        leds_tester.set_mc_data(preset_mc_test_blue <<= 1, preset_mc_test_green, preset_mc_test_red);  
-        REQUIRE(leds_tester.get_common_reg_at(53, result));
-        REQUIRE(result == 0b10000000);                              // 128
-        REQUIRE(leds_tester.get_common_reg_at(54, result));
-        REQUIRE(result == 0b00000000);  
+        // clear the previous test
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(53) == 0x00);                              // 0
+        REQUIRE(+leds_tester.get_common_reg_at(54) == 0x00);                              // 0
 
     }
 }
@@ -289,13 +212,18 @@ TEST_CASE("Greyscale bit tests", "[tlc5955]")
     // @brief Test Preset: all bits of one colour off
     const std::bitset<leds_tester.m_gs_data_resolution> preset_gs_test_off {0};
 
-    uint8_t result {0};
+    // @brief Test Preset: alternating bit pattern
+    const std::bitset<leds_tester.m_gs_data_resolution> preset_gs_test_pattern_0xAAAA {0b1010101010101010};
+    // @brief Test Preset: inverse alternating bit pattern
+    const std::bitset<leds_tester.m_gs_data_resolution> preset_gs_test_pattern_0x5555 {0b0101010101010101};
+
     SECTION("Invalid LED index")
     {
         REQUIRE_FALSE(leds_tester.set_gs_data(16, preset_gs_test_off, preset_gs_test_off, preset_gs_test_off));
     }
 
-    SECTION("GS bit test ON-OFF-OFF")
+    // @brief Set the bit pattern via the API and read it back directly from byte array
+    SECTION("GS bit test 0xAAAA pattern")
     {
         // Example Byte Mapping
         // ROW #1
@@ -305,26 +233,28 @@ TEST_CASE("Greyscale bit tests", "[tlc5955]")
         //            #0      #1      #2      #3      #4      #5      #6      #7      #8      #9     #10     #11     #12     #13      #14     #15     #16     #17
         for (uint16_t led_idx = 0; led_idx < 16; led_idx++)
         {
-            // Bx LED
+            // set the bit pattern
             leds_tester.flush_common_register();
-            REQUIRE(leds_tester.set_gs_data(led_idx, preset_gs_test_on, preset_gs_test_off, preset_gs_test_off));
+            REQUIRE(leds_tester.set_gs_data(
+                led_idx, 
+                preset_gs_test_pattern_0xAAAA, 
+                preset_gs_test_pattern_0xAAAA, 
+                preset_gs_test_pattern_0xAAAA));
 
+            // GS data sections are grouped in bytes of 6
             uint16_t byte_idx = led_idx * 6;
-            REQUIRE(leds_tester.get_common_reg_at(byte_idx, result));
-            REQUIRE(result == 0b01111111);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0b11111111);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0b10000000);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0b00000000);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0b00000000);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0b00000000);
+            REQUIRE(+leds_tester.get_common_reg_at(byte_idx)    == 0b01010101); // byte 0
+            REQUIRE(+leds_tester.get_common_reg_at(++byte_idx)  == 0b01010101); // byte 1
+            REQUIRE(+leds_tester.get_common_reg_at(++byte_idx)  == 0b01010101); // byte 2
+            REQUIRE(+leds_tester.get_common_reg_at(++byte_idx)  == 0b01010101); // byte 3
+            REQUIRE(+leds_tester.get_common_reg_at(++byte_idx)  == 0b01010101); // byte 4
+            REQUIRE(+leds_tester.get_common_reg_at(++byte_idx)  == 0b01010101); // byte 5
+            REQUIRE(+leds_tester.get_common_reg_at(++byte_idx)  == 0b00000000); // byte 6
         }
     }
-    SECTION("GS bit test OFF-ON-OFF")
+
+    // @brief Set the inverse bit pattern via the API and read it back directly from byte array
+    SECTION("GS bit test 0x5555 pattern")
     {
         // Example Byte Mapping
         // ROW #1
@@ -335,124 +265,25 @@ TEST_CASE("Greyscale bit tests", "[tlc5955]")
         
         for (uint16_t led_idx = 0; led_idx < 16; led_idx++)
         {
-            // Gx LED
+            // set the inverse bit pattern
             leds_tester.flush_common_register();
-            REQUIRE(leds_tester.set_gs_data(led_idx, preset_gs_test_off, preset_gs_test_on, preset_gs_test_off));
+            REQUIRE(leds_tester.set_gs_data(
+                led_idx, 
+                preset_gs_test_pattern_0x5555, 
+                preset_gs_test_pattern_0x5555, 
+                preset_gs_test_pattern_0x5555));
 
+            // GS data sections are grouped in bytes of 6
             uint16_t byte_idx = led_idx * 6;
-            REQUIRE(leds_tester.get_common_reg_at(byte_idx, result));
-            REQUIRE(result == 0b0000'0000);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0b0000'0000);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0b0111'1111);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0b1111'1111);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0b1000'0000);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0b0000'0000);
+            REQUIRE(+leds_tester.get_common_reg_at(byte_idx)    == 0b00101010); // byte 0
+            REQUIRE(+leds_tester.get_common_reg_at(++byte_idx)  == 0b10101010); // byte 1
+            REQUIRE(+leds_tester.get_common_reg_at(++byte_idx)  == 0b10101010); // byte 2
+            REQUIRE(+leds_tester.get_common_reg_at(++byte_idx)  == 0b10101010); // byte 3
+            REQUIRE(+leds_tester.get_common_reg_at(++byte_idx)  == 0b10101010); // byte 4
+            REQUIRE(+leds_tester.get_common_reg_at(++byte_idx)  == 0b10101010); // byte 5
+            REQUIRE(+leds_tester.get_common_reg_at(++byte_idx)  == 0b10000000); // byte 6
         }
     }
-
-    SECTION("GS bit test OFF-OFF-ON")
-    {
-        // Example Byte Mapping
-        // ROW #1
-        // GS            B15             G15             R15              B14             G14             R14            B13             G13             R13   
-        // bits    0[==============][==============][==============][==============][==============][==============][==============][==============][==============]
-        // Bytes   [======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][
-        //            #0      #1      #2      #3      #4      #5      #6      #7      #8      #9     #10     #11     #12     #13      #14     #15     #16     #17
-
-        for (uint16_t led_idx = 0; led_idx < 16; led_idx++)
-        {
-            // Rx LED
-            leds_tester.flush_common_register();
-            REQUIRE(leds_tester.set_gs_data(led_idx, preset_gs_test_off, preset_gs_test_off, preset_gs_test_on));
-
-            uint16_t byte_idx = led_idx * 6;
-            REQUIRE(leds_tester.get_common_reg_at(byte_idx, result));
-            REQUIRE(result == 0b0000'0000);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0b0000'0000);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0b0000'0000);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0b0000'0000);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0b0111'1111);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0b1111'1111);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result)); // MSB of byte #97
-            REQUIRE(result == 0b1000'0000);
-
-        }
-    }
-
-    SECTION("GS bit test ON-ON-ON")
-    {
-        // Example Byte Mapping
-        // ROW #1
-        // GS            B15             G15             R15              B14             G14             R14            B13             G13             R13   
-        // bits    0[==============][==============][==============][==============][==============][==============][==============][==============][==============]
-        // Bytes   [======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][
-        //            #0      #1      #2      #3      #4      #5      #6      #7      #8      #9     #10     #11     #12     #13      #14     #15     #16     #17
-        for (uint16_t led_idx = 0; led_idx < 16; led_idx++)
-        {
-            // Bx LED
-            leds_tester.flush_common_register();
-            REQUIRE(leds_tester.set_gs_data(led_idx, preset_gs_test_on, preset_gs_test_on, preset_gs_test_on));
-
-            uint16_t byte_idx = led_idx * 6;
-            REQUIRE(leds_tester.get_common_reg_at(byte_idx, result));
-            REQUIRE(result == 0x7F);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0xFF);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0xFF);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0xFF);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0xFF);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0xFF);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result)); // MSB of byte #97
-            REQUIRE(result == 0x80);
-        }
-    }
-
-    SECTION("GS bit test OFF-OFF-OFF")
-    {
-        // Example Byte Mapping
-        // ROW #1
-        // GS            B15             G15             R15              B14             G14             R14            B13             G13             R13   
-        // bits    0[==============][==============][==============][==============][==============][==============][==============][==============][==============]
-        // Bytes   [======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][======][
-        //            #0      #1      #2      #3      #4      #5      #6      #7      #8      #9     #10     #11     #12     #13      #14     #15     #16     #17
-
-        for (uint16_t led_idx = 0; led_idx < 16; led_idx++)
-        {
-            // Bx LED
-            leds_tester.flush_common_register();
-            REQUIRE(leds_tester.set_gs_data(led_idx, preset_gs_test_off, preset_gs_test_off, preset_gs_test_off));
-
-            uint16_t byte_idx = led_idx * 6;
-            REQUIRE(leds_tester.get_common_reg_at(byte_idx, result));
-            REQUIRE(result == 0x00);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0x00);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0x00);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0x00);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0x00);
-            REQUIRE(leds_tester.get_common_reg_at(++byte_idx, result));
-            REQUIRE(result == 0x00);
-        }
-    }
-
-
 }
 
 
@@ -465,8 +296,10 @@ TEST_CASE("Dot Correction bit tests", "[tlc5955]")
     const std::bitset<leds_tester.m_dc_data_resolution> preset_dc_test_on {127};
     // @brief Test Preset: all bits of one colour off
     const std::bitset<leds_tester.m_dc_data_resolution> preset_dc_test_off {0};
+    // @brief Test Preset: alternating bits for positional testing
+    const std::bitset<leds_tester.m_dc_data_resolution> preset_dc_test_pattern_0x55 {0b1010101};
+    const std::bitset<leds_tester.m_dc_data_resolution> preset_dc_test_pattern_0x2A {0b0101010};
 
-    uint8_t result {0};
 
     // @brief Test out of bounds
     SECTION("Invalid LED Index")
@@ -485,51 +318,30 @@ TEST_CASE("Dot Correction bit tests", "[tlc5955]")
         // Bytes   ======][======][======][======][======][======][======][======][======][======][====
         //          #54     #55     #56     #57      #58     #59    #60     #61     #62     #63     #64
  
-        // B15 + G15 + R15 off
-        REQUIRE(leds_tester.set_dc_data(15, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(54, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(55, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(56, result));
-        REQUIRE(result == 0b00000000);  
+        // set the bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            15, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55));
+        REQUIRE(+leds_tester.get_common_reg_at(54) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(55) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(56) == 0b01010100);
 
-        // B15 on, G15 + R15 off
-        REQUIRE(leds_tester.set_dc_data(15, preset_dc_test_on, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(54, result));
-        REQUIRE(result == 0b01111111);  
-        REQUIRE(leds_tester.get_common_reg_at(55, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(56, result));
-        REQUIRE(result == 0b00000000);
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(54) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(55) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(56) == 0x00);
 
-        // B15 off, G15 on, R15 off
-        REQUIRE(leds_tester.set_dc_data(15, preset_dc_test_off, preset_dc_test_on, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(54, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(55, result));
-        REQUIRE(result == 0b11111110);  
-        REQUIRE(leds_tester.get_common_reg_at(56, result));
-        REQUIRE(result == 0b00000000);
-        
-        // B15 off, G15 off, R15 on
-        REQUIRE(leds_tester.set_dc_data(15, preset_dc_test_off, preset_dc_test_off, preset_dc_test_on));
-        REQUIRE(leds_tester.get_common_reg_at(54, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(55, result));
-        REQUIRE(result == 0b00000001);  
-        REQUIRE(leds_tester.get_common_reg_at(56, result));
-        REQUIRE(result == 0b11111100);
-        
-        // B15 + G15 + R15 off
-        REQUIRE(leds_tester.set_dc_data(15, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(54, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(55, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(56, result));
-        REQUIRE(result == 0b00000000);  
-  
+        // set the inverse bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            15, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A));
+        REQUIRE(+leds_tester.get_common_reg_at(54) == 0b00101010);
+        REQUIRE(+leds_tester.get_common_reg_at(55) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(56) == 0b10101000);
+
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(54) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(55) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(56) == 0x00);
+
     }
 
     SECTION("LED14 Dot Correction bits test")
@@ -543,59 +355,34 @@ TEST_CASE("Dot Correction bit tests", "[tlc5955]")
         // Bytes   ======][======][======][======][======][======][======][======][======][======][====
         //          #54     #55     #56     #57      #58     #59    #60     #61     #62     #63     #64
 
-        // B14 + G14 + R14 off
-        REQUIRE(leds_tester.set_dc_data(14, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(56, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(57, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(58, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(59, result));
-        REQUIRE(result == 0b00000000); 
-        // B14 on, G14 + R14 off
-        REQUIRE(leds_tester.set_dc_data(14, preset_dc_test_on, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(56, result));
-        REQUIRE(result == 0b00000011);  
-        REQUIRE(leds_tester.get_common_reg_at(57, result));
-        REQUIRE(result == 0b11111000);  
-        REQUIRE(leds_tester.get_common_reg_at(58, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(59, result));
-        REQUIRE(result == 0b00000000);
+        // set the bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            14, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55));
+        REQUIRE(+leds_tester.get_common_reg_at(56) == 0b00000010);
+        REQUIRE(+leds_tester.get_common_reg_at(57) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(58) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(59) == 0b10100000);
 
-        // B14 off, G14 on, R14 off
-        REQUIRE(leds_tester.set_dc_data(14, preset_dc_test_off, preset_dc_test_on, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(56, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(57, result));
-        REQUIRE(result == 0b00000111);  
-        REQUIRE(leds_tester.get_common_reg_at(58, result));
-        REQUIRE(result == 0b11110000);  
-        REQUIRE(leds_tester.get_common_reg_at(59, result));
-        REQUIRE(result == 0b00000000);
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(56) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(57) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(58) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(59) == 0x00);
+
+        // set the inverse bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            14, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A));
+        REQUIRE(+leds_tester.get_common_reg_at(56) == 0b00000001);
+        REQUIRE(+leds_tester.get_common_reg_at(57) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(58) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(59) == 0b01000000);
+
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(56) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(57) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(58) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(59) == 0x00);
         
-        // B14 off, G14 off, R14 on
-        REQUIRE(leds_tester.set_dc_data(14, preset_dc_test_off, preset_dc_test_off, preset_dc_test_on));
-        REQUIRE(leds_tester.get_common_reg_at(56, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(57, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(58, result));
-        REQUIRE(result == 0b00001111);  
-        REQUIRE(leds_tester.get_common_reg_at(59, result));
-        REQUIRE(result == 0b11100000);
-        
-        // B14 + G14 + R14 off
-        REQUIRE(leds_tester.set_dc_data(14, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(56, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(57, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(58, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(59, result));
-        REQUIRE(result == 0b00000000); 
     }
     SECTION("LED13 Dot Correction bits test")
     {
@@ -608,50 +395,30 @@ TEST_CASE("Dot Correction bit tests", "[tlc5955]")
         // Bytes   ======][======][======][======][======][======][======][======][======][======][====
         //          #54     #55     #56     #57      #58     #59    #60     #61     #62     #63     #64
 
-        // B13 + G13 + R13 off
-        REQUIRE(leds_tester.set_dc_data(13, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(59, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(60, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(61, result));
-        REQUIRE(result == 0b00000000);  
+        // set the bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            13, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55));
+        REQUIRE(+leds_tester.get_common_reg_at(59) == 0b00010101);
+        REQUIRE(+leds_tester.get_common_reg_at(60) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(61) == 0b01010101);
 
-        // B13 on, G13 + R13 off
-        REQUIRE(leds_tester.set_dc_data(13, preset_dc_test_on, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(59, result));
-        REQUIRE(result == 0b00011111);  
-        REQUIRE(leds_tester.get_common_reg_at(60, result));
-        REQUIRE(result == 0b11000000);  
-        REQUIRE(leds_tester.get_common_reg_at(61, result));
-        REQUIRE(result == 0b00000000);  
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(59) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(60) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(61) == 0x00);
 
-        // B13 off, G13 on, R13 off
-        REQUIRE(leds_tester.set_dc_data(13, preset_dc_test_off, preset_dc_test_on, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(59, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(60, result));
-        REQUIRE(result == 0b00111111);  
-        REQUIRE(leds_tester.get_common_reg_at(61, result));
-        REQUIRE(result == 0b10000000);  
+        // set the inverse bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            13, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A));
+        REQUIRE(+leds_tester.get_common_reg_at(59) == 0b00001010);
+        REQUIRE(+leds_tester.get_common_reg_at(60) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(61) == 0b10101010);
+
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(59) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(60) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(61) == 0x00);
         
-        // B13 off, G13 off, R13 on
-        REQUIRE(leds_tester.set_dc_data(13, preset_dc_test_off, preset_dc_test_off, preset_dc_test_on));
-        REQUIRE(leds_tester.get_common_reg_at(59, result));
-        REQUIRE(result == 0b000000);  
-        REQUIRE(leds_tester.get_common_reg_at(60, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(61, result));
-        REQUIRE(result == 0b01111111);  
-        
-        // B13 + G13 + R13 off
-        REQUIRE(leds_tester.set_dc_data(13, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(59, result));
-        REQUIRE(result == 0b000000);  
-        REQUIRE(leds_tester.get_common_reg_at(60, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(61, result));
-        REQUIRE(result == 0b00000000);  
     }
 
     SECTION("LED12 Dot Correction bits test")
@@ -665,50 +432,29 @@ TEST_CASE("Dot Correction bit tests", "[tlc5955]")
         // Bytes   ======][======][======][======][======][======][======][======][======][======][====
         //          #54     #55     #56     #57      #58     #59    #60     #61     #62     #63     #64
 
-        // B12 + G12 + R12 off
-        REQUIRE(leds_tester.set_dc_data(12, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(62, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(63, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(64, result));
-        REQUIRE(result == 0b00000000);  
+        // set the bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            12, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55));
+        REQUIRE(+leds_tester.get_common_reg_at(62) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(62) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(64) == 0b10101000);
 
-        // B12 on, G12 + R12 off
-        REQUIRE(leds_tester.set_dc_data(12, preset_dc_test_on, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(62, result));
-        REQUIRE(result == 0b11111110);  
-        REQUIRE(leds_tester.get_common_reg_at(63, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(64, result));
-        REQUIRE(result == 0b00000000);  
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(62) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(63) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(64) == 0x00);
 
-        // B12 off, G12 on, R12 off
-        REQUIRE(leds_tester.set_dc_data(12, preset_dc_test_off, preset_dc_test_on, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(62, result));
-        REQUIRE(result == 0b00000001);  
-        REQUIRE(leds_tester.get_common_reg_at(63, result));
-        REQUIRE(result == 0b11111100);  
-        REQUIRE(leds_tester.get_common_reg_at(64, result));
-        REQUIRE(result == 0b00000000);   
-        
-        // B12 off, G12 off, R12 on
-        REQUIRE(leds_tester.set_dc_data(12, preset_dc_test_off, preset_dc_test_off, preset_dc_test_on));
-        REQUIRE(leds_tester.get_common_reg_at(62, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(63, result));
-        REQUIRE(result == 0b00000011);  
-        REQUIRE(leds_tester.get_common_reg_at(64, result));
-        REQUIRE(result == 0b11111000);   
-        
-        // B12 + G12 + R12 off
-        REQUIRE(leds_tester.set_dc_data(12, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(62, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(63, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(64, result));
-        REQUIRE(result == 0b00000000);    
+        // set the inverse bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            12, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A));
+        REQUIRE(+leds_tester.get_common_reg_at(62) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(63) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(64) == 0b01010000);
+
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(62) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(63) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(64) == 0x00);        
     }
 
     SECTION("LED11 Dot Correction bits test")
@@ -720,60 +466,34 @@ TEST_CASE("Dot Correction bit tests", "[tlc5955]")
         // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
         //        #64   #65      #66    #67     #68     #69     #70     #71     #72     #73     #74
  
-        // B11 + G11 + R11 off
-        REQUIRE(leds_tester.set_dc_data(11, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(64, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(65, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(66, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(67, result));
-        REQUIRE(result == 0b00000000);  
+        // set the bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            11, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55));
+        REQUIRE(+leds_tester.get_common_reg_at(64) == 0b00000101);
+        REQUIRE(+leds_tester.get_common_reg_at(65) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(66) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(67) == 0b01000000);
 
-        // B11 on, G11 + R11 off
-        REQUIRE(leds_tester.set_dc_data(11, preset_dc_test_on, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(64, result));
-        REQUIRE(result == 0b00000111);  
-        REQUIRE(leds_tester.get_common_reg_at(65, result));
-        REQUIRE(result == 0b11110000);  
-        REQUIRE(leds_tester.get_common_reg_at(66, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(67, result));
-        REQUIRE(result == 0b00000000);  
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(64) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(65) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(66) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(67) == 0x00);
 
-        // B11 off, G11 on, R11 off
-        REQUIRE(leds_tester.set_dc_data(11, preset_dc_test_off, preset_dc_test_on, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(64, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(65, result));
-        REQUIRE(result == 0b00001111);  
-        REQUIRE(leds_tester.get_common_reg_at(66, result));
-        REQUIRE(result == 0b11100000);  
-        REQUIRE(leds_tester.get_common_reg_at(67, result));
-        REQUIRE(result == 0b00000000);  
+        // set the inverse bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            11, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A));
+        REQUIRE(+leds_tester.get_common_reg_at(64) == 0b00000010);
+        REQUIRE(+leds_tester.get_common_reg_at(65) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(66) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(67) == 0b10000000);
+
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(64) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(65) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(66) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(67) == 0x00);
         
-        // B11 off, G11 off, R11 on
-        REQUIRE(leds_tester.set_dc_data(11, preset_dc_test_off, preset_dc_test_off, preset_dc_test_on));
-        REQUIRE(leds_tester.get_common_reg_at(64, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(65, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(66, result));
-        REQUIRE(result == 0b00011111);  
-        REQUIRE(leds_tester.get_common_reg_at(67, result));
-        REQUIRE(result == 0b11000000);  
-        
-        // B11 + G11 + R11 off
-        REQUIRE(leds_tester.set_dc_data(11, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(64, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(65, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(66, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(67, result));
-        REQUIRE(result == 0b00000000);  
     }
 
     SECTION("LED10 Dot Correction bits test")
@@ -784,52 +504,31 @@ TEST_CASE("Dot Correction bit tests", "[tlc5955]")
         // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
         // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
         //        #64   #65      #66    #67     #68     #69     #70     #71     #72     #73     #74
- 
-        // B10 + G10 + R10 off
-        REQUIRE(leds_tester.set_dc_data(10, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(67, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(68, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(69, result));
-        REQUIRE(result == 0b00000000);  
 
+         // set the bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            10, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55));
+        REQUIRE(+leds_tester.get_common_reg_at(67) == 0b00101010);
+        REQUIRE(+leds_tester.get_common_reg_at(68) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(69) == 0b10101010);
 
-        // B10 on, G10 + R10 off
-        REQUIRE(leds_tester.set_dc_data(10, preset_dc_test_on, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(67, result));
-        REQUIRE(result == 0b00111111);  
-        REQUIRE(leds_tester.get_common_reg_at(68, result));
-        REQUIRE(result == 0b10000000);  
-        REQUIRE(leds_tester.get_common_reg_at(69, result));
-        REQUIRE(result == 0b00000000);  
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(67) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(68) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(69) == 0x00);
 
-        // B10 off, G10 on, R10 off
-        REQUIRE(leds_tester.set_dc_data(10, preset_dc_test_off, preset_dc_test_on, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(67, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(68, result));
-        REQUIRE(result == 0b01111111);  
-        REQUIRE(leds_tester.get_common_reg_at(69, result));
-        REQUIRE(result == 0b00000000);  
-        
-        // B10 off, G10 off, R10 on
-        REQUIRE(leds_tester.set_dc_data(10, preset_dc_test_off, preset_dc_test_off, preset_dc_test_on));
-        REQUIRE(leds_tester.get_common_reg_at(67, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(68, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(69, result));
-        REQUIRE(result == 0b11111110);  
-        
-        // B10 + G10 + R10 off
-        REQUIRE(leds_tester.set_dc_data(10, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(67, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(68, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(69, result));
-        REQUIRE(result == 0b00000000);  
+        // set the inverse bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            10, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A));
+        REQUIRE(+leds_tester.get_common_reg_at(67) == 0b00010101);
+        REQUIRE(+leds_tester.get_common_reg_at(68) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(69) == 0b01010100);
+
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(67) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(68) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(69) == 0x00);
+
     }
 
     SECTION("LED9 Dot Correction bits test")
@@ -840,61 +539,34 @@ TEST_CASE("Dot Correction bit tests", "[tlc5955]")
         // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
         // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
         //        #64   #65      #66    #67     #68     #69     #70     #71     #72     #73     #74
- 
-        // B9 + G9 + R9 off
-        REQUIRE(leds_tester.set_dc_data(9, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(69, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(70, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(71, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(72, result));
-        REQUIRE(result == 0b00000000);  
 
-        // B9 on, G9 + R9 off
-        REQUIRE(leds_tester.set_dc_data(9, preset_dc_test_on, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(69, result));
-        REQUIRE(result == 0b00000001);  
-        REQUIRE(leds_tester.get_common_reg_at(70, result));
-        REQUIRE(result == 0b11111100);  
-        REQUIRE(leds_tester.get_common_reg_at(71, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(72, result));
-        REQUIRE(result == 0b00000000);   
+        // set the bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            9, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55));
+        REQUIRE(+leds_tester.get_common_reg_at(69) == 0b00000001);
+        REQUIRE(+leds_tester.get_common_reg_at(70) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(71) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(72) == 0b01010000);
 
-        // B9 off, G9 on, R9 off
-        REQUIRE(leds_tester.set_dc_data(9, preset_dc_test_off, preset_dc_test_on, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(69, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(70, result));
-        REQUIRE(result == 0b00000011);  
-        REQUIRE(leds_tester.get_common_reg_at(71, result));
-        REQUIRE(result == 0b11111000);  
-        REQUIRE(leds_tester.get_common_reg_at(72, result));
-        REQUIRE(result == 0b00000000);    
-        
-        // B9 off, G9 off, R9 on
-        REQUIRE(leds_tester.set_dc_data(9, preset_dc_test_off, preset_dc_test_off, preset_dc_test_on));
-        REQUIRE(leds_tester.get_common_reg_at(69, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(70, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(71, result));
-        REQUIRE(result == 0b00000111);  
-        REQUIRE(leds_tester.get_common_reg_at(72, result));
-        REQUIRE(result == 0b11110000);   
-        
-        // B9 + G9 + R9 off
-        REQUIRE(leds_tester.set_dc_data(9, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(69, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(70, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(71, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(72, result));
-        REQUIRE(result == 0b00000000);   
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(69) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(70) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(71) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(72) == 0x00);
+
+        // set the inverse bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            9, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A));
+        REQUIRE(+leds_tester.get_common_reg_at(69) == 0b00000000);
+        REQUIRE(+leds_tester.get_common_reg_at(70) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(71) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(72) == 0b10100000);
+
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(69) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(70) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(71) == 0x00);    
+        REQUIRE(+leds_tester.get_common_reg_at(72) == 0x00);    
     }
 
     SECTION("LED8 Dot Correction bits test")
@@ -906,60 +578,33 @@ TEST_CASE("Dot Correction bit tests", "[tlc5955]")
         // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
         //        #64   #65      #66    #67     #68     #69     #70     #71     #72     #73     #74
  
-        // B8 + G8 + R8 off
-        REQUIRE(leds_tester.set_dc_data(8, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(72, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(73, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(74, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(75, result));
-        REQUIRE(result == 0b00000000);  
+        // set the bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            8, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55));
+        REQUIRE(+leds_tester.get_common_reg_at(72) == 0b00001010);
+        REQUIRE(+leds_tester.get_common_reg_at(73) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(74) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(75) == 0b10000000);
 
-        // B8 on, G8 + R8 off
-        REQUIRE(leds_tester.set_dc_data(8, preset_dc_test_on, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(72, result));
-        REQUIRE(result == 0b00001111);  
-        REQUIRE(leds_tester.get_common_reg_at(73, result));
-        REQUIRE(result == 0b11100000);  
-        REQUIRE(leds_tester.get_common_reg_at(74, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(75, result));
-        REQUIRE(result == 0b00000000);   
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(72) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(73) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(74) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(75) == 0x00);
 
-        // B8 off, G8 on, R8 off
-        REQUIRE(leds_tester.set_dc_data(8, preset_dc_test_off, preset_dc_test_on, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(72, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(73, result));
-        REQUIRE(result == 0b00011111);  
-        REQUIRE(leds_tester.get_common_reg_at(74, result));
-        REQUIRE(result == 0b11000000);  
-        REQUIRE(leds_tester.get_common_reg_at(75, result));
-        REQUIRE(result == 0b00000000);     
-        
-        // B8 off, G8 off, R8 on
-        REQUIRE(leds_tester.set_dc_data(8, preset_dc_test_off, preset_dc_test_off, preset_dc_test_on));
-        REQUIRE(leds_tester.get_common_reg_at(72, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(73, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(74, result));
-        REQUIRE(result == 0b00111111);  
-        REQUIRE(leds_tester.get_common_reg_at(75, result));
-        REQUIRE(result == 0b10000000);     
-        
-        // B8 + G8 + R8 off
-        REQUIRE(leds_tester.set_dc_data(8, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(72, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(73, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(74, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(75, result));
-        REQUIRE(result == 0b00000000);    
+        // set the inverse bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            8, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A));
+        REQUIRE(+leds_tester.get_common_reg_at(72) == 0b00000101);
+        REQUIRE(+leds_tester.get_common_reg_at(73) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(74) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(75) == 0b00000000);
+
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(72) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(73) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(74) == 0x00);    
+        REQUIRE(+leds_tester.get_common_reg_at(75) == 0x00);  
     }
 
     SECTION("LED7 Dot Correction bits test")
@@ -971,51 +616,29 @@ TEST_CASE("Dot Correction bit tests", "[tlc5955]")
         // Bytes   ======][======][======][======][======][======][======][======][======][======][====
         //          #75     #76     #77     #78     #79     #80     #81     #82     #83     #84     #85
 
-        // B7 + G7 + R7 off
-        REQUIRE(leds_tester.set_dc_data(7, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(75, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(76, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(77, result));
-        REQUIRE(result == 0b00000000); 
-        
-        // B7 on, G7 + R7 off
-        REQUIRE(leds_tester.set_dc_data(7, preset_dc_test_on, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(75, result));
-        REQUIRE(result == 0b01111111);  
-        REQUIRE(leds_tester.get_common_reg_at(76, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(77, result));
-        REQUIRE(result == 0b00000000); 
-        
-        // B7 off, G7 on, R7 off
-        REQUIRE(leds_tester.set_dc_data(7, preset_dc_test_off, preset_dc_test_on, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(75, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(76, result));
-        REQUIRE(result == 0b11111110);  
-        REQUIRE(leds_tester.get_common_reg_at(77, result));
-        REQUIRE(result == 0b00000000); 
-                
-        // B7 off, G7 off, R7 on
-        REQUIRE(leds_tester.set_dc_data(7, preset_dc_test_off, preset_dc_test_off, preset_dc_test_on));
-        REQUIRE(leds_tester.get_common_reg_at(75, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(76, result));
-        REQUIRE(result == 0b00000001);  
-        REQUIRE(leds_tester.get_common_reg_at(77, result));
-        REQUIRE(result == 0b11111100); 
-                
-        // B7 + G7 + R7 off
-        REQUIRE(leds_tester.set_dc_data(7, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(75, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(76, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(77, result));
-        REQUIRE(result == 0b00000000); 
-        
+        // set the bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            7, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55));
+        REQUIRE(+leds_tester.get_common_reg_at(75) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(76) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(77) == 0b01010100);
+
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(75) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(76) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(77) == 0x00);
+
+        // set the inverse bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            7, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A));
+        REQUIRE(+leds_tester.get_common_reg_at(75) == 0b00101010);
+        REQUIRE(+leds_tester.get_common_reg_at(76) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(77) == 0b10101000);
+
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(75) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(76) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(77) == 0x00);    
     }
 
     SECTION("LED6 Dot Correction bits test")
@@ -1027,60 +650,33 @@ TEST_CASE("Dot Correction bit tests", "[tlc5955]")
         // Bytes   ======][======][======][======][======][======][======][======][======][======][====
         //          #75     #76     #77     #78     #79     #80     #81     #82     #83     #84     #85
 
-        // B6 + G6 + R6 off
-        REQUIRE(leds_tester.set_dc_data(6, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(77, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(78, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(79, result));
-        REQUIRE(result == 0b00000000); 
-        REQUIRE(leds_tester.get_common_reg_at(80, result));
-        REQUIRE(result == 0b00000000); 
-        
-        // B6 on, G6 + R6 off
-        REQUIRE(leds_tester.set_dc_data(6, preset_dc_test_on, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(77, result));
-        REQUIRE(result == 0b00000011);  
-        REQUIRE(leds_tester.get_common_reg_at(78, result));
-        REQUIRE(result == 0b11111000);  
-        REQUIRE(leds_tester.get_common_reg_at(79, result));
-        REQUIRE(result == 0b00000000); 
-        REQUIRE(leds_tester.get_common_reg_at(80, result));
-        REQUIRE(result == 0b00000000);  
-        
-        // B6 off, G6 on, R6 off
-        REQUIRE(leds_tester.set_dc_data(6, preset_dc_test_off, preset_dc_test_on, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(77, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(78, result));
-        REQUIRE(result == 0b00000111);  
-        REQUIRE(leds_tester.get_common_reg_at(79, result));
-        REQUIRE(result == 0b11110000); 
-        REQUIRE(leds_tester.get_common_reg_at(80, result));
-        REQUIRE(result == 0b00000000);  
-                
-        // B6 off, G6 off, R6 on
-        REQUIRE(leds_tester.set_dc_data(6, preset_dc_test_off, preset_dc_test_off, preset_dc_test_on));
-        REQUIRE(leds_tester.get_common_reg_at(77, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(78, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(79, result));
-        REQUIRE(result == 0b00001111); 
-        REQUIRE(leds_tester.get_common_reg_at(80, result));
-        REQUIRE(result == 0b11100000);  
-                
-        // B6 + G6 + R6 off
-        REQUIRE(leds_tester.set_dc_data(6, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(77, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(78, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(79, result));
-        REQUIRE(result == 0b00000000); 
-        REQUIRE(leds_tester.get_common_reg_at(80, result));
-        REQUIRE(result == 0b00000000);  
+        // set the bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            6, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55));
+        REQUIRE(+leds_tester.get_common_reg_at(77) == 0b00000010);
+        REQUIRE(+leds_tester.get_common_reg_at(78) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(79) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(80) == 0b10100000);
+
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(77) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(78) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(79) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(80) == 0x00);
+
+        // set the inverse bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            6, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A));
+        REQUIRE(+leds_tester.get_common_reg_at(77) == 0b00000001);
+        REQUIRE(+leds_tester.get_common_reg_at(78) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(79) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(80) == 0b01000000);
+
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(77) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(78) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(79) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(80) == 0x00);  
         
     }
 
@@ -1093,50 +689,29 @@ TEST_CASE("Dot Correction bit tests", "[tlc5955]")
         // Bytes   ======][======][======][======][======][======][======][======][======][======][====
         //          #75     #76     #77     #78     #79     #80     #81     #82     #83     #84     #85
 
-        // B5 + G5 + R5 off
-        REQUIRE(leds_tester.set_dc_data(5, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(80, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(81, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(82, result));
-        REQUIRE(result == 0b00000000);  
+        // set the bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            5, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55));
+        REQUIRE(+leds_tester.get_common_reg_at(80) == 0b00010101);
+        REQUIRE(+leds_tester.get_common_reg_at(81) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(82) == 0b01010101);
 
-        // B5 on, G5 + R5 off
-        REQUIRE(leds_tester.set_dc_data(5, preset_dc_test_on, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(80, result));
-        REQUIRE(result == 0b00011111);  
-        REQUIRE(leds_tester.get_common_reg_at(81, result));
-        REQUIRE(result == 0b11000000);  
-        REQUIRE(leds_tester.get_common_reg_at(82, result));
-        REQUIRE(result == 0b00000000);  
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(80) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(81) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(82) == 0x00);
 
-        // B5 off, G5 on, R5 off
-        REQUIRE(leds_tester.set_dc_data(5, preset_dc_test_off, preset_dc_test_on, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(80, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(81, result));
-        REQUIRE(result == 0b00111111);  
-        REQUIRE(leds_tester.get_common_reg_at(82, result));
-        REQUIRE(result == 0b10000000);  
+        // set the inverse bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            5, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A));
+        REQUIRE(+leds_tester.get_common_reg_at(80) == 0b00001010);
+        REQUIRE(+leds_tester.get_common_reg_at(81) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(82) == 0b10101010);
 
-        // B5 off, G5 off, R5 on
-        REQUIRE(leds_tester.set_dc_data(5, preset_dc_test_off, preset_dc_test_off, preset_dc_test_on));
-        REQUIRE(leds_tester.get_common_reg_at(80, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(81, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(82, result));
-        REQUIRE(result == 0b01111111);  
-
-        // B5 + G5 + R5 off
-        REQUIRE(leds_tester.set_dc_data(5, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(80, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(81, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(82, result)); 
-        REQUIRE(result == 0b00000000);  
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(80) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(81) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(82) == 0x00);
     }
 
     SECTION("LED4 Dot Correction bits test")
@@ -1148,50 +723,29 @@ TEST_CASE("Dot Correction bit tests", "[tlc5955]")
         // Bytes   ======][======][======][======][======][======][======][======][======][======][====
         //          #75     #76     #77     #78     #79     #80     #81     #82     #83     #84     #85
 
-        // B4 + G4 + R4 off
-        REQUIRE(leds_tester.set_dc_data(4, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(83, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(84, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(85, result));
-        REQUIRE(result == 0b00000000);  
+        // set the bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            4, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55));
+        REQUIRE(+leds_tester.get_common_reg_at(83) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(84) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(85) == 0b10101000);
 
-        // B4 on, G4 + R4 off
-        REQUIRE(leds_tester.set_dc_data(4, preset_dc_test_on, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(83, result));
-        REQUIRE(result == 0b11111110);  
-        REQUIRE(leds_tester.get_common_reg_at(84, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(85, result));
-        REQUIRE(result == 0b00000000);  
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(83) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(84) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(85) == 0x00);
 
-        // B4 off, G4 on, R4 off
-        REQUIRE(leds_tester.set_dc_data(4, preset_dc_test_off, preset_dc_test_on, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(83, result));
-        REQUIRE(result == 0b00000001);  
-        REQUIRE(leds_tester.get_common_reg_at(84, result));
-        REQUIRE(result == 0b11111100);  
-        REQUIRE(leds_tester.get_common_reg_at(85, result));
-        REQUIRE(result == 0b00000000);  
+        // set the inverse bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            4, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A));
+        REQUIRE(+leds_tester.get_common_reg_at(83) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(84) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(85) == 0b01010000);
 
-        // B4 off, G4 off, R4 on
-        REQUIRE(leds_tester.set_dc_data(4, preset_dc_test_off, preset_dc_test_off, preset_dc_test_on));
-        REQUIRE(leds_tester.get_common_reg_at(83, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(84, result));
-        REQUIRE(result == 0b00000011);  
-        REQUIRE(leds_tester.get_common_reg_at(85, result));
-        REQUIRE(result == 0b11111000);  
-
-        // B4 + G4 + R4 off
-        REQUIRE(leds_tester.set_dc_data(4, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(83, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(84, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(85, result));
-        REQUIRE(result == 0b00000000);  
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(83) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(84) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(85) == 0x00);
     }
 
     SECTION("LED3 Dot Correction bits test")
@@ -1203,60 +757,33 @@ TEST_CASE("Dot Correction bit tests", "[tlc5955]")
         // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
         //        #85   #86     #87      #88    #89     #90     #91     #92     #93     #94     #95   #96    
 
-        // B3 + G3 + R3 off
-        REQUIRE(leds_tester.set_dc_data(3, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(85, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(86, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(87, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(88, result));
-        REQUIRE(result == 0b00000000);  
+        // set the bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            3, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55));
+        REQUIRE(+leds_tester.get_common_reg_at(85) == 0b00000101);
+        REQUIRE(+leds_tester.get_common_reg_at(86) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(87) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(88) == 0b01000000);
 
-        // B3 on, G3 + R3 off
-        REQUIRE(leds_tester.set_dc_data(3, preset_dc_test_on, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(85, result));
-        REQUIRE(result == 0b00000111);  
-        REQUIRE(leds_tester.get_common_reg_at(86, result));
-        REQUIRE(result == 0b11110000);  
-        REQUIRE(leds_tester.get_common_reg_at(87, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(88, result));
-        REQUIRE(result == 0b00000000); 
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(85) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(86) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(87) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(88) == 0x00);
 
-        // B3 off, G3 on, R3 off
-        REQUIRE(leds_tester.set_dc_data(3, preset_dc_test_off, preset_dc_test_on, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(85, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(86, result));
-        REQUIRE(result == 0b00001111);  
-        REQUIRE(leds_tester.get_common_reg_at(87, result));
-        REQUIRE(result == 0b11100000);  
-        REQUIRE(leds_tester.get_common_reg_at(88, result));
-        REQUIRE(result == 0b00000000); 
+        // set the inverse bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            3, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A));
+        REQUIRE(+leds_tester.get_common_reg_at(85) == 0b00000010);
+        REQUIRE(+leds_tester.get_common_reg_at(86) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(87) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(88) == 0b10000000);
 
-        // B3 off, G3 off, R3 on
-        REQUIRE(leds_tester.set_dc_data(3, preset_dc_test_off, preset_dc_test_off, preset_dc_test_on));
-        REQUIRE(leds_tester.get_common_reg_at(85, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(86, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(87, result));
-        REQUIRE(result == 0b00011111);  
-        REQUIRE(leds_tester.get_common_reg_at(88, result));
-        REQUIRE(result == 0b11000000); 
-
-        // B3 + G3 + R3 off
-        REQUIRE(leds_tester.set_dc_data(3, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(85, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(86, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(87, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(88, result));
-        REQUIRE(result == 0b00000000); 
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(85) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(86) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(87) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(88) == 0x00);
     }
 
     SECTION("LED2 Dot Correction bits test")
@@ -1268,50 +795,30 @@ TEST_CASE("Dot Correction bit tests", "[tlc5955]")
         // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
         //        #85   #86     #87      #88    #89     #90     #91     #92     #93     #94     #95   #96    
 
-        // B2 + G2 + R2 off
-        REQUIRE(leds_tester.set_dc_data(2, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(88, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(89, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(90, result));
-        REQUIRE(result == 0b00000000);  
+        // set the bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            2, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55));
+        REQUIRE(+leds_tester.get_common_reg_at(88) == 0b00101010);
+        REQUIRE(+leds_tester.get_common_reg_at(89) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(90) == 0b10101010);
 
-        // B2 on, G2 + R2 off
-        REQUIRE(leds_tester.set_dc_data(2, preset_dc_test_on, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(88, result));
-        REQUIRE(result == 0b00111111);  
-        REQUIRE(leds_tester.get_common_reg_at(89, result));
-        REQUIRE(result == 0b10000000);  
-        REQUIRE(leds_tester.get_common_reg_at(90, result));
-        REQUIRE(result == 0b00000000);  
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(88) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(89) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(90) == 0x00);
 
-        // B2 off, G2 on, R2 off
-        REQUIRE(leds_tester.set_dc_data(2, preset_dc_test_off, preset_dc_test_on, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(88, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(89, result));
-        REQUIRE(result == 0b01111111);  
-        REQUIRE(leds_tester.get_common_reg_at(90, result));
-        REQUIRE(result == 0b00000000);   
+        // set the inverse bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            2, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A));
+        REQUIRE(+leds_tester.get_common_reg_at(88) == 0b00010101);
+        REQUIRE(+leds_tester.get_common_reg_at(89) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(90) == 0b01010100);
 
-        // B2 off, G2 off, R2 on
-        REQUIRE(leds_tester.set_dc_data(2, preset_dc_test_off, preset_dc_test_off, preset_dc_test_on));
-        REQUIRE(leds_tester.get_common_reg_at(88, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(89, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(90, result));
-        REQUIRE(result == 0b11111110);   
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(88) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(89) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(90) == 0x00);
 
-        // B2 + G2 + R2 off
-        REQUIRE(leds_tester.set_dc_data(2, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(88, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(89, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(90, result));
-        REQUIRE(result == 0b00000000);  
     }    
 
     SECTION("LED1 Dot Correction bits test")
@@ -1323,60 +830,33 @@ TEST_CASE("Dot Correction bit tests", "[tlc5955]")
         // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
         //        #85   #86     #87      #88    #89     #90     #91     #92     #93     #94     #95   #96    
 
-        // B1 + G1 + R1 off
-        REQUIRE(leds_tester.set_dc_data(1, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(90, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(91, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(92, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(93, result));
-        REQUIRE(result == 0b00000000);  
+        // set the bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            1, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55));
+        REQUIRE(+leds_tester.get_common_reg_at(90) == 0b00000001);
+        REQUIRE(+leds_tester.get_common_reg_at(91) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(92) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(93) == 0b01010000);
 
-        // B1 on, G1 + R1 off
-        REQUIRE(leds_tester.set_dc_data(1, preset_dc_test_on, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(90, result));
-        REQUIRE(result == 0b00000001);  
-        REQUIRE(leds_tester.get_common_reg_at(91, result));
-        REQUIRE(result == 0b11111100);  
-        REQUIRE(leds_tester.get_common_reg_at(92, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(93, result));
-        REQUIRE(result == 0b00000000);    
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(90) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(91) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(92) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(93) == 0x00);
 
-        // B1 off, G1 on, R1 off
-        REQUIRE(leds_tester.set_dc_data(1, preset_dc_test_off, preset_dc_test_on, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(90, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(91, result));
-        REQUIRE(result == 0b00000011);  
-        REQUIRE(leds_tester.get_common_reg_at(92, result));
-        REQUIRE(result == 0b11111000);  
-        REQUIRE(leds_tester.get_common_reg_at(93, result));
-        REQUIRE(result == 0b00000000);     
+        // set the inverse bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            1, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A));
+        REQUIRE(+leds_tester.get_common_reg_at(90) == 0b00000000);
+        REQUIRE(+leds_tester.get_common_reg_at(91) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(92) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(93) == 0b10100000);
 
-        // B1 off, G1 off, R1 on
-        REQUIRE(leds_tester.set_dc_data(1, preset_dc_test_off, preset_dc_test_off, preset_dc_test_on));
-        REQUIRE(leds_tester.get_common_reg_at(90, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(91, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(92, result));
-        REQUIRE(result == 0b00000111);  
-        REQUIRE(leds_tester.get_common_reg_at(93, result));
-        REQUIRE(result == 0b11110000);    
-
-        // B1 + G1 + R1 off
-        REQUIRE(leds_tester.set_dc_data(1, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(90, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(91, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(92, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(93, result));
-        REQUIRE(result == 0b00000000);   
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(90) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(91) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(92) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(93) == 0x00);
     }        
 
     SECTION("LED0 Dot Correction bits test")
@@ -1388,60 +868,33 @@ TEST_CASE("Dot Correction bit tests", "[tlc5955]")
         // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
         //        #85   #86     #87      #88    #89     #90     #91     #92     #93     #94     #95   #96    
 
-        // B0 + G0 + R0 off
-        REQUIRE(leds_tester.set_dc_data(0, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(93, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(94, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(95, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(96, result));
-        REQUIRE(result == 0b00000000);  
+        // set the bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            0, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55));
+        REQUIRE(+leds_tester.get_common_reg_at(93) == 0b00001010);
+        REQUIRE(+leds_tester.get_common_reg_at(94) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(95) == 0b10101010);
+        REQUIRE(+leds_tester.get_common_reg_at(96) == 0b10000000);
 
-        // B0 on, G0 + R0 off
-        REQUIRE(leds_tester.set_dc_data(0, preset_dc_test_on, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(93, result));
-        REQUIRE(result == 0b00001111);  
-        REQUIRE(leds_tester.get_common_reg_at(94, result));
-        REQUIRE(result == 0b11100000);  
-        REQUIRE(leds_tester.get_common_reg_at(95, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(96, result));
-        REQUIRE(result == 0b00000000);  
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(93) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(94) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(95) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(96) == 0x00);
 
-        // B0 off, G0 on, R0 off
-        REQUIRE(leds_tester.set_dc_data(0, preset_dc_test_off, preset_dc_test_on, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(93, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(94, result));
-        REQUIRE(result == 0b00011111);  
-        REQUIRE(leds_tester.get_common_reg_at(95, result));
-        REQUIRE(result == 0b11000000);  
-        REQUIRE(leds_tester.get_common_reg_at(96, result));
-        REQUIRE(result == 0b00000000);      
+        // set the inverse bit pattern
+        REQUIRE(leds_tester.set_dc_data(
+            0, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A));
+        REQUIRE(+leds_tester.get_common_reg_at(93) == 0b00000101);
+        REQUIRE(+leds_tester.get_common_reg_at(94) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(95) == 0b01010101);
+        REQUIRE(+leds_tester.get_common_reg_at(96) == 0b00000000);
 
-        // B0 off, G0 off, R0 on
-        REQUIRE(leds_tester.set_dc_data(0, preset_dc_test_off, preset_dc_test_off, preset_dc_test_on));
-        REQUIRE(leds_tester.get_common_reg_at(93, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(94, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(95, result));
-        REQUIRE(result == 0b00111111);  
-        REQUIRE(leds_tester.get_common_reg_at(96, result));
-        REQUIRE(result == 0b10000000);     
-
-        // B0 + G0 + R0 off
-        REQUIRE(leds_tester.set_dc_data(0, preset_dc_test_off, preset_dc_test_off, preset_dc_test_off));
-        REQUIRE(leds_tester.get_common_reg_at(93, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(94, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(95, result));
-        REQUIRE(result == 0b00000000);  
-        REQUIRE(leds_tester.get_common_reg_at(96, result));
-        REQUIRE(result == 0b00000000);   
+        leds_tester.flush_common_register();
+        REQUIRE(+leds_tester.get_common_reg_at(93) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(94) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(95) == 0x00);
+        REQUIRE(+leds_tester.get_common_reg_at(96) == 0x00);
     }        
 
 
