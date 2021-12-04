@@ -54,9 +54,9 @@ public:
     // @param green_value The 7-bit word for green BC
     // @param red_value The 7-bit word for red BC    
     void set_bc_data(
-        std::bitset<m_bc_data_resolution> &blue_value, 
-        std::bitset<m_bc_data_resolution> &green_value, 
-        std::bitset<m_bc_data_resolution> &red_value);
+        const std::bitset<m_bc_data_resolution> &blue_value, 
+        const std::bitset<m_bc_data_resolution> &green_value, 
+        const std::bitset<m_bc_data_resolution> &red_value);
 
     // @brief Write the MC (Max Current) data to the common register
     // https://www.ti.com/lit/ds/symlink/tlc5955.pdf
@@ -121,6 +121,28 @@ public:
     // @brief Helper function to print bytes as decimal values to RTT. USE_RTT must be defined.
     void print_common_bits();
 
+    // @brief sections offsets for common register
+    enum byte_offsets {
+        // @brief 1 for control data latch, 0 for greyscale data latch 
+        latch = 0U,
+        // @brief Used in control data latch.
+        ctrl_cmd = 0U,
+        // @brief Used in greyscale data latch. 
+        greyscale = 1U,
+        // @brief Used in control data latch. Don't care bits.
+        padding = 1U,
+        // @brief Used in control data latch.
+        function = 49U,
+        // @brief Used in control data latch.
+        brightness_control = 50U,
+        // @brief Used in control data latch.
+        max_current = 53U,
+        // @brief Used in control data latch.
+        dot_correct = 54U
+    };
+
+    
+
 protected:
 
     static const uint8_t m_common_reg_size_bytes {97};
@@ -160,14 +182,15 @@ private:
     };
 
     // the offset of each common register section
-    static const uint8_t m_latch_offset {0};
-    static constexpr uint8_t m_ctrl_cmd_offset {static_cast<uint8_t>(m_latch_offset + m_latch_size_bits)};                  // 1U
-    static constexpr uint8_t m_gs_data_offset {static_cast<uint8_t>(m_ctrl_cmd_offset)};                                    // 9U - used in gs data latch only
-    static constexpr uint8_t m_padding_offset {static_cast<uint8_t>(m_ctrl_cmd_offset + m_ctrl_cmd_size_bits)};             // 9U - used in ctrl data latch only
-    static constexpr uint16_t m_func_data_offset {static_cast<uint16_t>(m_padding_offset + m_padding_section_size_bits)};   // 9U
-    static constexpr uint16_t m_bc_data_offset {static_cast<uint16_t>(m_func_data_offset + m_func_data_section_size_bits)}; // 398U
-    static constexpr uint16_t m_mc_data_offset {static_cast<uint16_t>(m_bc_data_offset + m_bc_data_section_size_bits)};     // 424U
-    static constexpr uint16_t m_dc_data_offset {static_cast<uint16_t>(m_mc_data_offset + m_mc_data_section_size_bits)};     // 433U
+    // static const uint8_t m_latch_offset {0};
+    // static constexpr uint8_t m_ctrl_cmd_offset {static_cast<uint8_t>(m_latch_offset + m_latch_size_bits)};                  // 1U
+    // static constexpr uint8_t m_gs_data_offset {static_cast<uint8_t>(m_ctrl_cmd_offset)};                                    // 9U - used in gs data latch only
+    // static constexpr uint8_t m_padding_offset {static_cast<uint8_t>(m_ctrl_cmd_offset + m_ctrl_cmd_size_bits)};             // 9U - used in ctrl data latch only
+    // static constexpr uint16_t m_func_data_offset {static_cast<uint16_t>(m_padding_offset + m_padding_section_size_bits)};   // 9U
+    // static constexpr uint16_t m_bc_data_offset {static_cast<uint16_t>(m_func_data_offset + m_func_data_section_size_bits)}; // 398U
+    // static constexpr uint16_t m_mc_data_offset {static_cast<uint16_t>(m_bc_data_offset + m_bc_data_section_size_bits)};     // 424U
+    // static constexpr uint16_t m_dc_data_offset {static_cast<uint16_t>(m_mc_data_offset + m_mc_data_section_size_bits)};     // 433U
+
 
     // @brief Helper function to set/clear one bit of one byte in the common register byte array
     // @param byte The targetted byte in the common register

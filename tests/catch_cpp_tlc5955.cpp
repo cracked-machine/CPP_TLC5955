@@ -47,11 +47,11 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
         //          #0          
         // latch bit test
         
-        REQUIRE(+leds_tester.get_common_reg_at(0) == 0b00000000);   
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::latch) == 0b00000000);   
 
         leds_tester.set_control_bit(true);
 
-        REQUIRE(+leds_tester.get_common_reg_at(0) == 0b10000000);      // 128
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::latch) == 0b10000000);      // 128
     }
 
     // @brief Testing tlc5955::Driver::set_ctrl_cmd_bits()
@@ -65,25 +65,31 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
         //             #0    #1
 
         leds_tester.set_ctrl_cmd_bits();
-        REQUIRE(+leds_tester.get_common_reg_at(0) == 0b1001011);      // 75
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::ctrl_cmd) == 0b1001011);      // 75
 
         // clear the previous test
         leds_tester.flush_common_register();
-        REQUIRE(+leds_tester.get_common_reg_at(50) == 0b00000000);  
-        REQUIRE(+leds_tester.get_common_reg_at(51) == 0b00000000); 
-        REQUIRE(+leds_tester.get_common_reg_at(52) == 0b00000000);        
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::ctrl_cmd) == 0b00000000);         
 
     }
 
     // Testing tlc5955::Driver::set_padding_bits()
     SECTION("Padding bits test")
     {
-        // padding bits test - bytes 1-48 should be empty 
+        // set all bytes to 0xFF
+        std::for_each (leds_tester.data_begin(), leds_tester.data_end(), [](auto &byte){
+            byte = 0xFF;
+        });
 
+        // padding bits test - bytes 1-48 should be empty 
         leds_tester.set_padding_bits();
-        for (uint8_t idx = 1; idx < 49; idx++)
+        for (
+            uint8_t byte_idx = (leds_tester.byte_offsets::padding); 
+            byte_idx < (leds_tester.byte_offsets::function + 1); 
+            byte_idx++
+        )
         {
-            REQUIRE(+leds_tester.get_common_reg_at(idx) == 0);
+            REQUIRE(+leds_tester.get_common_reg_at(byte_idx) == 0);
         }
     }
 
@@ -96,25 +102,24 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
         // Bytes   #49  #50
 
         leds_tester.set_function_data(true, false, false, false, false);
-        REQUIRE(+leds_tester.get_common_reg_at(49) == 0b00000010);  // 2
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::function) == 0b00000010);  // 2
         
         leds_tester.set_function_data(true, true, false, false, false);
-        REQUIRE(+leds_tester.get_common_reg_at(49) == 0b00000011);  // 3
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::function) == 0b00000011);  // 3
                         
         leds_tester.set_function_data(true, true, true, false, false);
-        REQUIRE(+leds_tester.get_common_reg_at(50) == 0b10000000);  // 128
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::function + 1) == 0b10000000);  // 128
         
         leds_tester.set_function_data(true, true, true, true, false);
-        REQUIRE(+leds_tester.get_common_reg_at(50) == 0b11000000);  // 192
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::function + 1) == 0b11000000);  // 192
 
         leds_tester.set_function_data(true, true, true, true, true);
-        REQUIRE(+leds_tester.get_common_reg_at(50) == 0b11100000);  // 224
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::function + 1) == 0b11100000);  // 224
 
         // clear the previous test
         leds_tester.flush_common_register();
-        REQUIRE(+leds_tester.get_common_reg_at(50) == 0b00000000);  
-        REQUIRE(+leds_tester.get_common_reg_at(51) == 0b00000000); 
-        REQUIRE(+leds_tester.get_common_reg_at(52) == 0b00000000);        
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::function) == 0b00000000);  
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::function + 1) == 0b00000000); 
 
     }
     
@@ -136,15 +141,15 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
             preset_bc_test_pattern_0x2A, 
             preset_bc_test_pattern_0x55);            
       
-        REQUIRE(+leds_tester.get_common_reg_at(50) == 0b00010101);  
-        REQUIRE(+leds_tester.get_common_reg_at(51) == 0b01010101); 
-        REQUIRE(+leds_tester.get_common_reg_at(52) == 0b01010101);    
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::brightness_control) == 0b00010101);  
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::brightness_control + 1) == 0b01010101); 
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::brightness_control + 2) == 0b01010101);    
 
         // clear the previous test
         leds_tester.flush_common_register();
-        REQUIRE(+leds_tester.get_common_reg_at(50) == 0b00000000);  
-        REQUIRE(+leds_tester.get_common_reg_at(51) == 0b00000000); 
-        REQUIRE(+leds_tester.get_common_reg_at(52) == 0b00000000);    
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::brightness_control) == 0b00000000);  
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::brightness_control + 1) == 0b00000000); 
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::brightness_control + 2) == 0b00000000);    
 
         // set the inverse bit pattern
         leds_tester.set_bc_data(
@@ -152,15 +157,15 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
             preset_bc_test_pattern_0x55, 
             preset_bc_test_pattern_0x2A);            
       
-        REQUIRE(+leds_tester.get_common_reg_at(50) == 0b00001010);  
-        REQUIRE(+leds_tester.get_common_reg_at(51) == 0b10101010); 
-        REQUIRE(+leds_tester.get_common_reg_at(52) == 0b10101010);  
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::brightness_control) == 0b00001010);  
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::brightness_control + 2) == 0b10101010); 
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::brightness_control + 2) == 0b10101010);  
 
         // clear the previous test
         leds_tester.flush_common_register();
-        REQUIRE(+leds_tester.get_common_reg_at(50) == 0b00000000);  
-        REQUIRE(+leds_tester.get_common_reg_at(51) == 0b00000000); 
-        REQUIRE(+leds_tester.get_common_reg_at(52) == 0b00000000);        
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::brightness_control) == 0b00000000);  
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::brightness_control + 1) == 0b00000000); 
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::brightness_control + 2) == 0b00000000);        
 
     }
 
@@ -179,25 +184,25 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
         leds_tester.set_mc_data(
             preset_mc_test_pattern_0x5, preset_mc_test_pattern_0x2, preset_mc_test_pattern_0x5);
 
-        REQUIRE(+leds_tester.get_common_reg_at(53) == 0b10101010);                        // 170
-        REQUIRE(+leds_tester.get_common_reg_at(54) == 0b10000000);                        // 128
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::max_current) == 0b10101010);                        // 170
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::max_current + 1) == 0b10000000);                        // 128
         
         // clear the previous test
         leds_tester.flush_common_register();
-        REQUIRE(+leds_tester.get_common_reg_at(53) == 0x00);                              // 0
-        REQUIRE(+leds_tester.get_common_reg_at(54) == 0x00);                              // 0
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::max_current) == 0x00);                              // 0
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::max_current + 1) == 0x00);                              // 0
 
         // set bit pattern
         leds_tester.set_mc_data(
             preset_mc_test_pattern_0x2, preset_mc_test_pattern_0x5, preset_mc_test_pattern_0x2);
 
-        REQUIRE(+leds_tester.get_common_reg_at(53) == 0b01010101);                        // 85
-        REQUIRE(+leds_tester.get_common_reg_at(54) == 0b00000000);                        // 0
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::max_current) == 0b01010101);                        // 85
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::max_current + 1) == 0b00000000);                        // 0
 
         // clear the previous test
         leds_tester.flush_common_register();
-        REQUIRE(+leds_tester.get_common_reg_at(53) == 0x00);                              // 0
-        REQUIRE(+leds_tester.get_common_reg_at(54) == 0x00);                              // 0
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::max_current) == 0x00);                              // 0
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::max_current + 1) == 0x00);                              // 0
 
     }
 }
@@ -619,9 +624,9 @@ TEST_CASE("Dot Correction bit tests", "[tlc5955]")
         // set the bit pattern
         REQUIRE(leds_tester.set_dc_data(
             7, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55));
-        REQUIRE(+leds_tester.get_common_reg_at(75) == 0b01010101);
-        REQUIRE(+leds_tester.get_common_reg_at(76) == 0b01010101);
-        REQUIRE(+leds_tester.get_common_reg_at(77) == 0b01010100);
+        REQUIRE(+leds_tester.get_common_reg_at(75) == 0b01010101);  // B7
+        REQUIRE(+leds_tester.get_common_reg_at(76) == 0b01010101);  // G7
+        REQUIRE(+leds_tester.get_common_reg_at(77) == 0b01010100);  // G7 + R7
 
         leds_tester.flush_common_register();
         REQUIRE(+leds_tester.get_common_reg_at(75) == 0x00);
@@ -653,10 +658,10 @@ TEST_CASE("Dot Correction bit tests", "[tlc5955]")
         // set the bit pattern
         REQUIRE(leds_tester.set_dc_data(
             6, preset_dc_test_pattern_0x55, preset_dc_test_pattern_0x2A, preset_dc_test_pattern_0x55));
-        REQUIRE(+leds_tester.get_common_reg_at(77) == 0b00000010);
-        REQUIRE(+leds_tester.get_common_reg_at(78) == 0b10101010);
-        REQUIRE(+leds_tester.get_common_reg_at(79) == 0b10101010);
-        REQUIRE(+leds_tester.get_common_reg_at(80) == 0b10100000);
+        REQUIRE(+leds_tester.get_common_reg_at(77) == 0b00000010);  // B6
+        REQUIRE(+leds_tester.get_common_reg_at(78) == 0b10101010);  // B6 + G6
+        REQUIRE(+leds_tester.get_common_reg_at(79) == 0b10101010);  // G6 + R6
+        REQUIRE(+leds_tester.get_common_reg_at(80) == 0b10100000);  // R6
 
         leds_tester.flush_common_register();
         REQUIRE(+leds_tester.get_common_reg_at(77) == 0x00);
