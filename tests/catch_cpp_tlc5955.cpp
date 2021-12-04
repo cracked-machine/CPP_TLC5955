@@ -83,14 +83,22 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
 
         // padding bits test - bytes 1-48 should be empty 
         leds_tester.set_padding_bits();
+
+        // first byte should have MSB set e.g. 0b10000000
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::padding) == 0x80);
+
+        // next 47 bytes should be 0x00
         for (
-            uint8_t byte_idx = (leds_tester.byte_offsets::padding); 
-            byte_idx < (leds_tester.byte_offsets::function + 1); 
+            uint8_t byte_idx = (leds_tester.byte_offsets::padding + 1); 
+            byte_idx < (leds_tester.byte_offsets::function); 
             byte_idx++
         )
         {
-            REQUIRE(+leds_tester.get_common_reg_at(byte_idx) == 0);
+            REQUIRE(+leds_tester.get_common_reg_at(byte_idx) == 0x00);
         }
+        
+        // last byte should have partially cleared e.g. 0b00000111
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::function) == 0x07);
     }
 
     // Testing tlc5955::Driver::set_function_data()

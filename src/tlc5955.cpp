@@ -3,6 +3,8 @@
 #include <sstream>
 #include <cmath>
 #include <cstring>
+#include <byte_position.hpp>
+
 #ifdef USE_RTT
     #include <SEGGER_RTT.h>
 #endif
@@ -36,16 +38,19 @@ void Driver::set_ctrl_cmd_bits()
     // bits      [======]
     // Bytes     ======][
     //             #0    #1
-   
+    
+    // set the byte and bit starting positions
+    BytePosition byte_pos(byte_offsets::ctrl_cmd, m_ctrl_cmd_size_bits - 2);;
+    
     // 7 MSB bits of ctrl byte into 7 LSB of byte #0
     for (int8_t idx = m_ctrl_cmd_size_bits - 1; idx > 0; idx--)
     {
-        set_value_nth_bit(m_common_byte_register[byte_offsets::ctrl_cmd], idx -1 , m_ctrl_cmd.test(idx));  
-         
+        set_value_nth_bit(m_common_byte_register[byte_pos()], byte_pos.next_bit() , m_ctrl_cmd.test(idx));           
     }
 
     // the last m_ctrl_cmd bit in to MSB of byte #1
-    set_value_nth_bit(m_common_byte_register[byte_offsets::ctrl_cmd + 1], 7, m_ctrl_cmd.test(0));
+    byte_pos++;
+    set_value_nth_bit(m_common_byte_register[byte_pos()], byte_pos.next_bit(), m_ctrl_cmd.test(0));
     
 }
 
@@ -72,25 +77,32 @@ void Driver::set_padding_bits()
     // Bytes       ======][======][======][======][======][======][======][======][=====
     //              #41     #42     #43     #44     #45     #46     #47     #48     #49
 
-    // first, we write 7 LSB bits of m_common_byte_register[1] = 0
-    for (int8_t idx = 6; idx > -1; idx--)
+    // set the byte and bit starting positions
+    BytePosition byte_pos(byte_offsets::padding, 7);
+ 
+    // discard the first bit
+    byte_pos.next_bit();
+
+    // then write next 7 LSB bits of m_common_byte_register[1] = 0
+    while (byte_pos.has_next())
     {
-        set_value_nth_bit(m_common_byte_register[byte_offsets::padding], idx, false);  
+        
+        set_value_nth_bit(m_common_byte_register[byte_pos()], byte_pos.next_bit(), false);  
     }
 
-    // The next 47 bytes are don't care padding = 0
-    for (uint16_t byte_idx  = (byte_offsets::padding); byte_idx < (byte_offsets::function + 1); byte_idx++)
+    byte_pos++;
+
+    for (byte_pos(); byte_pos() < (byte_offsets::function); byte_pos++)
     {
-        for (int8_t bit_idx = 7; bit_idx > -1; bit_idx--)
+        while (byte_pos.has_next())
         {
-            set_value_nth_bit(m_common_byte_register[byte_idx], bit_idx, false);
+            set_value_nth_bit(m_common_byte_register[byte_pos()], byte_pos.next_bit(), false);
         }
     }
 
-    // lastly, we write 6 MSB bits of m_common_byte_register[49] = 0
-    for (int8_t idx = 7; idx > 1; idx--)
+    for (uint8_t count = 0; count < 5; count++)
     {
-        set_value_nth_bit(m_common_byte_register[49], idx, false);    
+        set_value_nth_bit(m_common_byte_register[byte_pos()], byte_pos.next_bit(), false);
     }
 
 }
