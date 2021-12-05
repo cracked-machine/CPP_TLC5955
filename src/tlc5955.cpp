@@ -11,20 +11,32 @@
 namespace tlc5955 
 {
 
-
-Driver::Driver(bool enable_dma_mode)
+bool Driver::start_dma_transmit()
 {
     #ifdef USE_HAL_DRIVER 
-        if (enable_dma_mode)
-        {
-            HAL_StatusTypeDef res = HAL_SPI_Transmit_DMA(&m_spi_interface, m_common_byte_register.data(), m_common_byte_register.size());
-            UNUSED(res);
-        }
+        return HAL_SPI_Transmit_DMA(&m_spi_interface, m_common_byte_register.data(), m_common_byte_register.size());      
     #else
-        // we don't care about SPI mode for x86-based unit testing
-        UNUSED(enable_dma_mode);
+        // we don't care about SPI for x86-based unit testing
     #endif
 }
+    
+bool Driver::pause_dma_transmit(bool pause)
+{
+    #ifdef USE_HAL_DRIVER 
+        // get the HAL result
+        volatile HAL_StatusTypeDef res {HAL_OK};
+        if (pause) { res = HAL_SPI_DMAPause(&m_spi_interface);  }
+        else {  res = HAL_SPI_DMAResume(&m_spi_interface); }        
+        // return it as bool result
+        if(res == HAL_OK) { return true; }
+        else { return false; }        
+    #else
+        // we don't care about SPI for x86-based unit testing
+        UNUSED(pause);
+        return true;
+    #endif
+}
+
 void Driver::set_value_nth_bit(uint8_t &byte, uint16_t bit, bool new_value)
 {
     if (new_value) { byte |= (1U << bit); }

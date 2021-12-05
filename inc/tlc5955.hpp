@@ -22,11 +22,12 @@ class Driver
 {
 public:
 
-
-
-    Driver(bool enable_dma_mode = true);
+    Driver() = default;
 
     virtual ~Driver() = default;
+
+    bool start_dma_transmit();
+    bool pause_dma_transmit(bool pause);
 
     static const uint8_t m_bc_data_resolution {7};
     static const uint8_t m_mc_data_resolution {3};
