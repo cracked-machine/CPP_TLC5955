@@ -16,9 +16,10 @@ class BytePosition
 {
 public:
 
-    // @brief Construct a new Byte Position object.
-    // @param max_bit_idx Set the maximum bit index.
-    BytePosition(uint16_t init_byte_pos, uint16_t init_bit_idx) 
+    // @brief Construct a new Byte Position object
+    // @param init_byte_pos The byte counter index
+    // @param init_bit_idx The max bit position within the byte.
+    BytePosition(const uint16_t init_byte_pos, const uint16_t init_bit_idx = 7) 
         :   m_byte_position(init_byte_pos), 
             m_max_bit_idx (init_bit_idx)
     {
@@ -39,17 +40,22 @@ public:
         m_bit_position = m_max_bit_idx;
         return ++m_byte_position;
     }
+  
+    void set_byte_idx(const uint16_t position)
+    {
+        m_byte_position = position;
+    }
 
-    uint16_t operator( )() const 
+    uint16_t get_byte_idx() const 
     { 
         #ifdef STDOUT_DEBUG
             std::cout << "Byte:" << m_byte_position << " Bit:" << m_bit_position << std::endl;
         #endif
         return m_byte_position;
     }    
-  
-    // @brief check if m_bit_position is at zero
-    // @return true if m_bit_position is non-zero, false if zero
+
+    // @brief check if we reach end of byte without decrementing the bit position.
+    // @return true if there are more bits in this byte. false if end of byte is reached.
     bool has_next() {
         if (m_bit_position == std::numeric_limits<uint16_t>::max())
         {
@@ -58,14 +64,13 @@ public:
         return true;
     }
 
-    // @brief return the decremented bit position. 
-    // @param post if true post decrements the bit position, if false pre decrements the bit position.
-    // Throws exception if m_bit_position == 0 on x86, returns zero if m_bit_position == 0 on arm.
+    // @brief get the bit index and post-decrement it. 
+    // Throws exception (x86) or returns zero (Arm) if next bit pos == std::numeric_limits<uint16_t>::max()
     // @return uint16_t The bit position value. 
-    uint16_t next_bit()
+    uint16_t next_bit_idx()
     {     
         auto safe_decrement_check = [](auto &bit_pos) {
-            // for post-decrement check if we already wrapped around to 65535 last time, 
+            // we are using post-decrement so check if we already wrapped around to 65535 from last time, 
             if (bit_pos == std::numeric_limits<uint16_t>::max())
             {
                 #ifndef STM32G0B1xx
@@ -79,6 +84,18 @@ public:
  
         return safe_decrement_check(m_bit_position) ? m_bit_position-- : m_bit_position;
  
+    }
+
+    // @brief Convenience function. Calls next_bit_idx() function N times.
+    // @param n The number of bits to skip forward 
+    // @return true if next_bit_idx() is successful, false if not
+    bool skip_next_n_bits(uint8_t n)
+    {
+        for (uint8_t idx = 0; idx < n; idx++)
+        {
+            if (!next_bit_idx()) { return false; }
+        }
+        return true;
     }
 
 private:
