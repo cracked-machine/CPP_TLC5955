@@ -87,29 +87,12 @@ void Driver::set_padding_bits()
     byte_pos.next_bit_idx();
 
     // then write next 7 LSB bits of byte #1 
-    while (byte_pos.has_next())
+    for (uint16_t idx = 0; idx < m_padding_section_size_bits - 1; idx++)
     {
         set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), false);  
     }
 
-    // BYTE #2
-    byte_pos++;
 
-    // BYTES #2-48. 
-    for (byte_pos.get_byte_idx(); byte_pos.get_byte_idx() < (byte_offsets::function); byte_pos++)
-    {
-        // decrement and shift in the bits until we reach zero index
-        while (byte_pos.has_next())
-        {
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), false);
-        }
-    }
-
-    // BYTE #49
-    for (uint8_t count = 0; count < 5; count++)
-    {
-        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), false);
-    }
 
 }
 
@@ -268,672 +251,230 @@ bool Driver::set_dc_data(
     {
         case 15:    // LED #15
 
-        // ROW #1
-        // DC        B15    G15    R15    B14    G14    R14    B13    G13    R13    B12    G12    R12
-        // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
-        // Bytes   ======][======][======][======][======][======][======][======][======][======][====
-        //          #54     #55     #56     #57      #58     #59    #60     #61     #62     #63     #64
+            // ROW #1
+            // DC        B15    G15    R15   
+            // bits    [=====][=====][=====]
+            // Bytes   ======][======][======]
+            //          #54     #55     #56   
 
-            // LED B15
+            // LED B15 
             byte_pos.set_byte_idx(byte_offsets::dot_correct); // BYTE #54
             byte_pos.next_bit_idx();    // skip MSB
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(0));
-
-            // LED G15;
-            byte_pos++;     // BYTE #55
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(0));
-
-
-            
-            // LED R15
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(6));
-            byte_pos++;     // BYTE #56
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(0));
-
             break;
 
         case 14:    // LED #14
 
-        // ROW #1
-        // DC        B15    G15    R15    B14    G14    R14    B13    G13    R13    B12    G12    R12
-        // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
-        // Bytes   ======][======][======][======][======][======][======][======][======][======][====
-        //          #54     #55     #56     #57      #58     #59    #60     #61     #62     #63     #64
+            // ROW #1
+            // DC        B14    G14    R14  
+            // bits    [=====][=====][=====]
+            // Bytes   =][======][======][==
+            //       #56   #57     #58    #59 
 
-        // LED B14
+            // LED B14
             byte_pos.set_byte_idx(byte_offsets::dot_correct + 2); // BYTE #56
             byte_pos.skip_next_n_bits(6);
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(5));
-            byte_pos++; // BYTE #57
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(0));
-
-        // LED G14
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(4));
-            byte_pos++; // BYTE #58
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(0));
-
-        // LED R14
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(3));
-            byte_pos++; // BYTE #59
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(0));
-
             break;
 
         case 13:    // LED #13
 
-        // ROW #1
-        // DC        B15    G15    R15    B14    G14    R14    B13    G13    R13    B12    G12    R12
-        // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
-        // Bytes   ======][======][======][======][======][======][======][======][======][======][====
-        //          #54     #55     #56     #57      #58     #59    #60     #61     #62     #63     #64
+            // ROW #1
+            // DC        B15    G15    R15    B14    G14    R14    B13    G13    R13    B12    G12    R12
+            // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
+            // Bytes   ======][======][======][======][======][======][======][======][======][======][====
+            //          #54     #55     #56     #57      #58     #59    #60     #61     #62     #63     #64
 
             // LED B13
             byte_pos.set_byte_idx(byte_offsets::dot_correct + 5); // BYTE #59
-            byte_pos.skip_next_n_bits(3);
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(2));
-            byte_pos++; // BYTE #60
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(0));
-
-            // LED G13
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(1));
-            byte_pos++; // BYTE #61
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(0));
-            
-            // LED R13
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(0));
+            byte_pos.skip_next_n_bits(3);    
             break;
 
         case 12:    // LED #12
 
-        // ROW #1
-        // DC        B15    G15    R15    B14    G14    R14    B13    G13    R13    B12    G12    R12
-        // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
-        // Bytes   ======][======][======][======][======][======][======][======][======][======][====
-        //          #54     #55     #56     #57      #58     #59    #60     #61     #62     #63     #64
+            // ROW #1
+            // DC        B15    G15    R15    B14    G14    R14    B13    G13    R13    B12    G12    R12
+            // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
+            // Bytes   ======][======][======][======][======][======][======][======][======][======][====
+            //          #54     #55     #56     #57      #58     #59    #60     #61     #62     #63     #64
 
             // LED B12
             byte_pos.set_byte_idx(byte_offsets::dot_correct + 8); // BYTE #62
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(0));
-            
-            // LED G12
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(6));
-            byte_pos++; // BYTE #63
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(0));
-
-            // LED R12
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(5));
-            byte_pos++; // BYTE #64
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(0));
             break;
 
         case 11:    // LED #11
 
-        // ROW #2
-        // DC        B11    G11    R11    B10    G10    R10    B9     G9     R9     B8     G8     R8
-        // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
-        // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
-        //        #64   #65      #66    #67     #68     #69     #70     #71     #72     #73     #74
-
+            // ROW #2
+            // DC        B11    G11    R11    B10    G10    R10    B9     G9     R9     B8     G8     R8
+            // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
+            // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
+            //        #64   #65      #66    #67     #68     #69     #70     #71     #72     #73     #74
 
             // LED B11
             byte_pos.set_byte_idx(byte_offsets::dot_correct + 10);  // BYTE #64
             byte_pos.skip_next_n_bits(5);
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(4));
-            byte_pos++; // BYTE #65
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(0));
-
-            // LED G11
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(3));
-            byte_pos++; // BYTE #66
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(0));
-            
-            // LED R11
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(2));
-            byte_pos++; // BYTE #67
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(0));
             break;
 
         case 10:    // LED #10
 
-        // ROW #2
-        // DC        B11    G11    R11    B10    G10    R10    B9     G9     R9     B8     G8     R8
-        // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
-        // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
-        //        #64   #65      #66    #67     #68     #69     #70     #71     #72     #73     #74
-
+            // ROW #2
+            // DC        B11    G11    R11    B10    G10    R10    B9     G9     R9     B8     G8     R8
+            // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
+            // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
+            //        #64   #65      #66    #67     #68     #69     #70     #71     #72     #73     #74
 
             // LED B10
             byte_pos.set_byte_idx(byte_offsets::dot_correct + 13);  // BYTE #67
             byte_pos.skip_next_n_bits(2);
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(1));
-            byte_pos++; // BYTE #68
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(0));
-
-            // LED G10
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(0));
-
-            // LED R10
-            byte_pos++; // BYTE #69
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(0));
-
             break;
 
         case 9: // LED #9
 
-        // ROW #2
-        // DC        B11    G11    R11    B10    G10    R10    B9     G9     R9     B8     G8     R8
-        // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
-        // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
-        //        #64   #65      #66    #67     #68     #69     #70     #71     #72     #73     #74
-
+            // ROW #2
+            // DC        B11    G11    R11    B10    G10    R10    B9     G9     R9     B8     G8     R8
+            // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
+            // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
+            //        #64   #65      #66    #67     #68     #69     #70     #71     #72     #73     #74
 
             // LED B9
             byte_pos.set_byte_idx(byte_offsets::dot_correct + 15);  // BYTE #69
             byte_pos.skip_next_n_bits(7);
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(6));
-            byte_pos++; // BYTE #70
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(0));
-
-            // LED G9
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(5));
-            byte_pos++; // BYTE #71
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(0));
-
-            // LED R9
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(4));
-            byte_pos++; // BYTE #72
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(0));
-
             break;  
 
         case 8:     // LED #8
 
-        // ROW #2
-        // DC        B11    G11    R11    B10    G10    R10    B9     G9     R9     B8     G8     R8
-        // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
-        // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
-        //        #64   #65      #66    #67     #68     #69     #70     #71     #72     #73     #74
-
+            // ROW #2
+            // DC        B11    G11    R11    B10    G10    R10    B9     G9     R9     B8     G8     R8
+            // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
+            // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
+            //        #64   #65      #66    #67     #68     #69     #70     #71     #72     #73     #74
 
             // LED B8
             byte_pos.set_byte_idx(byte_offsets::dot_correct + 18);  // BYTE #72
             byte_pos.skip_next_n_bits(4);
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(3));
-            byte_pos++; // BYTE #73
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(0));
-
-            // LED G8
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(2));
-            byte_pos++; // BYTE #74
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(0));
-
-            // LED R8
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(1));
-            byte_pos++;
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(0));
-
             break;   
 
         case 7: // LED #7
 
-        // ROW #3
-        // DC        B7      G7     R7    B6     G6     R6     B5     G5     R5     B4     G4     R4
-        // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
-        // Bytes   ======][======][======][======][======][======][======][======][======][======][====
-        //          #75     #76     #77     #78     #79     #80     #81     #82     #83     #84     #85
+            // ROW #3
+            // DC        B7      G7     R7    B6     G6     R6     B5     G5     R5     B4     G4     R4
+            // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
+            // Bytes   ======][======][======][======][======][======][======][======][======][======][====
+            //          #75     #76     #77     #78     #79     #80     #81     #82     #83     #84     #85
 
             // LED B7
             byte_pos.set_byte_idx(byte_offsets::dot_correct + 21); // BYTE #75
             byte_pos.skip_next_n_bits(1);
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(0));
-
-            // LED G7
-            byte_pos++; // BYTE #76
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(0));
-
-            // LED R7
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(6));
-            byte_pos++; // BYTE #77
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(0));
-
             break;       
 
         case 6:     // LED #6
 
-        // ROW #3   
-        // DC        B7      G7     R7    B6     G6     R6     B5     G5     R5     B4     G4     R4
-        // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
-        // Bytes   ======][======][======][======][======][======][======][======][======][======][====
-        //          #75     #76     #77     #78     #79     #80     #81     #82     #83     #84     #85
+            // ROW #3   
+            // DC        B7      G7     R7    B6     G6     R6     B5     G5     R5     B4     G4     R4
+            // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
+            // Bytes   ======][======][======][======][======][======][======][======][======][======][====
+            //          #75     #76     #77     #78     #79     #80     #81     #82     #83     #84     #85
 
             // LED B6
             byte_pos.set_byte_idx(byte_offsets::dot_correct + 23);  // BYTE #77
             byte_pos.skip_next_n_bits(6);
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(5));
-            byte_pos++; // BYTE 78
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(0));
-            
-            // LED G6
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(4));
-            byte_pos++; // BYTE 79
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(0));
-            
-            // LED R6
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(3));
-            byte_pos++; // BYTE 80
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(0));
-            
             break;
 
         case 5: // LED #5
 
-        // ROW #3   
-        // DC        B7      G7     R7    B6     G6     R6     B5     G5     R5     B4     G4     R4
-        // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
-        // Bytes   ======][======][======][======][======][======][======][======][======][======][====
-        //          #75     #76     #77     #78     #79     #80     #81     #82     #83     #84     #85
+            // ROW #3   
+            // DC        B7      G7     R7    B6     G6     R6     B5     G5     R5     B4     G4     R4
+            // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
+            // Bytes   ======][======][======][======][======][======][======][======][======][======][====
+            //          #75     #76     #77     #78     #79     #80     #81     #82     #83     #84     #85
 
             // LED B5
             byte_pos.set_byte_idx(byte_offsets::dot_correct + 26);  // BYTE #80
-            byte_pos.skip_next_n_bits(3);
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(2));
-            byte_pos++; // BYTE #81
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(0));
-            
-            // LED G5
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(1));
-            byte_pos++; // BYTE #82
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(0));
-            
-            // LED R5
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(0));
-            
+            byte_pos.skip_next_n_bits(3);            
             break;
 
         case 4:
 
-        // ROW #3   
-        // DC        B7      G7     R7    B6     G6     R6     B5     G5     R5     B4     G4     R4
-        // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
-        // Bytes   ======][======][======][======][======][======][======][======][======][======][====
-        //          #75     #76     #77     #78     #79     #80     #81     #82     #83     #84     #85
+            // ROW #3   
+            // DC        B7      G7     R7    B6     G6     R6     B5     G5     R5     B4     G4     R4
+            // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
+            // Bytes   ======][======][======][======][======][======][======][======][======][======][====
+            //          #75     #76     #77     #78     #79     #80     #81     #82     #83     #84     #85
 
             // LED B4
             byte_pos.set_byte_idx(byte_offsets::dot_correct + 29); //BYTE #83
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(0));
-            
-            // LED G4
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(6));
-            byte_pos++; // BYTE #83
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(0));
-            
-            // LED R4
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(5));
-            byte_pos++; // BYTE 84
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(0));
-
             break;
 
         case 3:
 
-        // ROW #4
-        // DC        B3     G3     R3      B2     G2    R2      B1    G1     R1     B0     G0     R0
-        // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
-        // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
-        //        #85   #86     #87      #88    #89     #90     #91     #92     #93     #94     #95   #96    
+            // ROW #4
+            // DC        B3     G3     R3      B2     G2    R2      B1    G1     R1     B0     G0     R0
+            // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
+            // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
+            //        #85   #86     #87      #88    #89     #90     #91     #92     #93     #94     #95   #96    
 
             // LED B3
             byte_pos.set_byte_idx(byte_offsets::dot_correct + 31);   // BYTE #85
             byte_pos.skip_next_n_bits(5);
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(4));
-            byte_pos++; // BYTE #86
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(0));
-            
-            // LED G3
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(3));
-            byte_pos++; // BYTE #87
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(0));
-            
-            // LED R3
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(2));
-            byte_pos++; // BYTE #88
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(0));
-
             break;
-
 
         case 2:
 
-        // ROW #4
-        // DC        B3     G3     R3      B2     G2    R2      B1    G1     R1     B0     G0     R0
-        // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
-        // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
-        //        #85   #86     #87      #88    #89     #90     #91     #92     #93     #94     #95   #96    
+            // ROW #4
+            // DC        B3     G3     R3      B2     G2    R2      B1    G1     R1     B0     G0     R0
+            // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
+            // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
+            //        #85   #86     #87      #88    #89     #90     #91     #92     #93     #94     #95   #96    
 
             // LED B2
             byte_pos.set_byte_idx(byte_offsets::dot_correct + 34);  // BYTE #88
             byte_pos.skip_next_n_bits(2);
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(1));
-            byte_pos++; // BYTE #89
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(0));
-            
-            // LED G2
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(0));
-            
-            // LED R2
-            byte_pos++; // BYTE #90
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(0));
-
             break;
 
         case 1:
 
-        // ROW #4
-        // DC        B3     G3     R3      B2     G2    R2      B1    G1     R1     B0     G0     R0
-        // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
-        // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
-        //        #85   #86     #87      #88    #89     #90     #91     #92     #93     #94     #95   #96    
+            // ROW #4
+            // DC        B3     G3     R3      B2     G2    R2      B1    G1     R1     B0     G0     R0
+            // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
+            // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
+            //        #85   #86     #87      #88    #89     #90     #91     #92     #93     #94     #95   #96    
 
             // LED B1
             byte_pos.set_byte_idx(byte_offsets::dot_correct + 36);  // BYTE #90
             byte_pos.skip_next_n_bits(7);
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(6));
-            byte_pos++; // BYTE #91
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(0));
-            
-            // LED G1
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(5));
-            byte_pos++; // BYTE #92
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(0));
-            
-            // LED R1
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(4));
-            byte_pos++; // BYTE #93
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(0));
-            
             break;
 
         case 0:
 
-        // ROW #4
-        // DC        B3     G3     R3      B2     G2    R2      B1    G1     R1     B0     G0     R0
-        // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
-        // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
-        //        #85   #86     #87      #88    #89     #90     #91     #92     #93     #94     #95   #96    
+            // ROW #4
+            // DC        B3     G3     R3      B2     G2    R2      B1    G1     R1     B0     G0     R0
+            // bits    [=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====][=====]
+            // Bytes   ==][======][======][======][======][======][======][======][======][======][======][
+            //        #85   #86     #87      #88    #89     #90     #91     #92     #93     #94     #95   #96    
 
             // LED B0
             byte_pos.set_byte_idx(byte_offsets::dot_correct + 39);  // BYTE #93
             byte_pos.skip_next_n_bits(4);
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(3));
-            byte_pos++;
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(0));
-            
-            // LED G0
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(2));
-            byte_pos++; // BYTE #94
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(1));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(0));
- 
-            // LED R0
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(6));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(5));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(4));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(3));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(2));
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(1));
-            byte_pos++;
-            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(0));
-
             break;
 
         default:    // led_idx > 15
             return false;
+    }
+
+    // set the bits
+    for (int8_t blue_idx = 6; blue_idx > -1; blue_idx--)
+    {
+        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(blue_idx));
+    }
+
+    // LED G15  
+    for (int8_t green_idx = 6; green_idx > -1; green_idx--)        
+    {
+        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(green_idx));
+    }
+
+    // LED R15
+    for (int8_t red_idx = 6; red_idx > -1; red_idx--)        
+    {            
+        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(red_idx));
     }
 
     return true;
@@ -990,72 +531,19 @@ bool Driver::set_gs_data(
 
     // byte #0, skip the MSB 
     byte_pos.skip_next_n_bits(1);
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(15));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(14));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(13));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(12));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(11));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(10));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(9));
 
-    // byte #1
-    byte_pos++;
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(8));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(7));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(6));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(5));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(4));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(3));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(2));    
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(1)); 
-
-    // byte #2
-    byte_pos++;
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(0));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(15));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(14));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(13));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(12));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(11));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(10));    
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(9));     
-
-    // byte #3
-    byte_pos++;
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(8));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(7));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(6));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(5));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(4));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(3));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(2));    
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(1)); 
-
-    // byte #4
-    byte_pos++;
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(0));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(15));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(14));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(13));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(12));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(11));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(10));    
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(9)); 
-
-    // byte #5
-    byte_pos++;
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(8));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(7));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(6));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(5));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(4));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(3));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(2));    
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(1));
-
-    // byte #6, write the final bit
-    byte_pos++;
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(0));
+    for (int8_t blue_idx = 15; blue_idx > -1; blue_idx--)
+    {
+        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(blue_idx));
+    }
+    for (int8_t green_idx = 15; green_idx > -1; green_idx--)
+    {
+        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(green_idx));
+    }
+    for (int8_t red_idx = 15; red_idx > -1; red_idx--)
+    {
+        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(red_idx));
+    }        
 
     return true;
 }
