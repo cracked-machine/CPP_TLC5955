@@ -5,6 +5,8 @@
 #ifdef USE_HAL_DRIVER
     #include "stm32g0xx.h"
     #include "main.h"
+#else
+    #define UNUSED(X) (void)X 
 #endif
 
 
@@ -20,7 +22,9 @@ class Driver
 {
 public:
 
-    Driver() = default;
+
+
+    Driver(bool enable_dma_mode = true);
 
     virtual ~Driver() = default;
 
@@ -199,7 +203,7 @@ private:
     void set_value_nth_bit(uint8_t &byte, uint16_t bit, bool new_value);
 
     
-    std::bitset<m_common_reg_size_bits> m_common_bit_register{0};
+    //std::bitset<m_common_reg_size_bits> m_common_bit_register{0};
 
     const uint8_t  m_latch_delay_ms {1};
 
