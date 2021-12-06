@@ -64,12 +64,15 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
         // Bytes     ======][
         //             #0    #1
 
+        leds_tester.set_control_bit(true);
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::latch) == 0b10000000);      // 128
+
         leds_tester.set_ctrl_cmd_bits();
-        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::ctrl_cmd) == 0b1001011);      // 75
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::ctrl_cmd) == 0b1100'1011);      // 203
 
         // clear the previous test
         leds_tester.flush_common_register();
-        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::ctrl_cmd) == 0b00000000);         
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::ctrl_cmd) == 0b0000'0000);         
 
     }
 
@@ -97,8 +100,8 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
             REQUIRE(+leds_tester.get_common_reg_at(byte_idx) == 0x00);
         }
         
-        // last byte should have partially cleared e.g. 0b00000111
-        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::function) == 0x07);
+        // last byte should have partially cleared e.g. 0b00000011
+        REQUIRE(+leds_tester.get_common_reg_at(leds_tester.byte_offsets::function) == 0x03);
     }
 
     // Testing tlc5955::Driver::set_function_data()
