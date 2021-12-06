@@ -8,8 +8,14 @@
 #ifdef USE_RTT
     #include <SEGGER_RTT.h>
 #endif
+
+
+
 namespace tlc5955 
 {
+
+
+
 
 bool Driver::start_dma_transmit()
 {
@@ -17,6 +23,7 @@ bool Driver::start_dma_transmit()
         return HAL_SPI_Transmit_DMA(&m_spi_interface, m_common_byte_register.data(), m_common_byte_register.size());      
     #else
         // we don't care about SPI for x86-based unit testing
+        return true;
     #endif
 }
     
@@ -51,9 +58,9 @@ void Driver::set_control_bit(bool ctrl_latch)
     // bits      =
     // Bytes     [
     //          #0  
-
-    //m_common_bit_register.set(m_latch_offset, ctrl_latch);
+    UNUSED(ctrl_latch);
     set_value_nth_bit(m_common_byte_register[byte_offsets::latch], 7, ctrl_latch);
+    //m_common_byte_register[byte_offsets::latch] = 0xFF;
 }
 
 void Driver::set_ctrl_cmd_bits()
@@ -68,17 +75,18 @@ void Driver::set_ctrl_cmd_bits()
     BytePosition byte_pos(byte_offsets::ctrl_cmd);
 
     // skip the MSB of byte #0
-    byte_pos.next_bit_idx();
+    byte_pos.skip_next_n_bits(1);
     
     // 7 MSB bits of ctrl byte into 7 LSB of byte #0
     for (int8_t idx = m_ctrl_cmd_size_bits - 1; idx > 0; idx--)
     {
-        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx() , m_ctrl_cmd.test(idx));           
+        uint8_t bit_idx = byte_pos.next_bit_idx();
+        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], bit_idx, m_ctrl_cmd.test(idx));           
     }
 
     // the last m_ctrl_cmd bit in to MSB of byte #1
-    byte_pos++;
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), m_ctrl_cmd.test(0));
+    uint8_t bit_idx = byte_pos.next_bit_idx();
+    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], bit_idx, m_ctrl_cmd.test(0));
     
 }
 
@@ -109,12 +117,22 @@ void Driver::set_padding_bits()
     BytePosition byte_pos(byte_offsets::padding);
  
     // skip MSB of byte #1
-    byte_pos.next_bit_idx();
+    byte_pos.skip_next_n_bits(1);
+    
 
-    // then write next 7 LSB bits of byte #1 
-    for (uint16_t idx = 0; idx < m_padding_section_size_bits - 1; idx++)
-    {
-        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), false);  
+    // then write next 389 bits of padding
+    for (uint16_t idx = 0; idx < m_padding_section_size_bits; idx++)
+    {   
+        uint8_t bit_idx = byte_pos.next_bit_idx();
+        // if (bit_idx == 0)
+        // {
+        //     set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], bit_idx, true);  
+        // }
+        // else
+        {
+            set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], bit_idx, false);  
+        }
+        
     }
 
 
@@ -152,50 +170,36 @@ void Driver::set_bc_data(
 {
     // BC         blue   green   red
     // bits      [=====][=====][=====]
-    // bits      ====][======][======]
+    // bits   xxx====][======][======]
     // Bytes     #50    #51      #52
     
     // BYTE #50
     BytePosition byte_pos(byte_offsets::brightness_control);
 
-    // set 5 LSB of byte #50 to bits 6-2 of BC blue_value
     byte_pos.skip_next_n_bits(3);
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(6));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(5));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(4));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(3));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(2));
 
-    // BYTE #51
-    byte_pos++;
-
-    // set the 2 MSB bits of byte #51 to the 2 LSB of blue_value
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(1));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(0));
+    // set 5 LSB of byte #50 to bits 6-2 of BC blue_value
+    for (int8_t blue_idx = 6; blue_idx > -1; blue_idx--)
+    {
+        uint8_t bit_idx = byte_pos.next_bit_idx();
+        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], bit_idx, blue_value.test(blue_idx));
+    }
 
     // set 5 LSB of byte #51 to bits 6-1 of BC green_value
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(6));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(5));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(4));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(3));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(2));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(1));
+    for (int8_t green_idx = 6; green_idx > -1; green_idx--)
+    {
+        uint8_t bit_idx = byte_pos.next_bit_idx();
+        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], bit_idx, green_value.test(green_idx));
+    }    
 
-    // BYTE #52
-    byte_pos++;
+    // set 7 LSB of byte #52 to bits all 7 bits of BC red_value
+    for (int8_t red_idx = 6; red_idx > -1; red_idx--)
+    {
+        uint8_t bit_idx = byte_pos.next_bit_idx();
+        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], bit_idx, red_value.test(red_idx));
+    }   
 
-    // set MSB of byte #52 to LSB of green_value
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(0));
-
-    // set 7 LSB of byte #50 to bits all 7 bits of BC red_value
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(6));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(5));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(4));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(3));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(2));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(1));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(0));
-
+    
 }
 
 void Driver::set_mc_data(
@@ -212,25 +216,26 @@ void Driver::set_mc_data(
     BytePosition byte_pos(byte_offsets::max_current);
 
     // 3 bits of blue in 3 MSB of byte #51 == 128
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(2));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(1));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(0));
+    for (int8_t blue_idx = 2; blue_idx > -1; blue_idx--)
+    {
+        uint8_t bit_idx = byte_pos.next_bit_idx();
+        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], bit_idx, blue_value.test(blue_idx));
+    }
     
     // 3 bits of green in next 3 bits of byte #51 == 144
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(2));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(1));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(0));
-    
+    for (int8_t green_idx = 2; green_idx > -1; green_idx--)
+    {
+        uint8_t bit_idx = byte_pos.next_bit_idx();
+        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], bit_idx, green_value.test(green_idx));
+    }    
+
     // 2 bits of red in 2 LSB of byte #51 (== 146) 
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(2));
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(1));
+    for (int8_t red_idx = 2; red_idx > -1; red_idx--)
+    {
+        uint8_t bit_idx = byte_pos.next_bit_idx();
+        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], bit_idx, red_value.test(red_idx));
+    }     
 
-    // BYTE #54
-    byte_pos++;
-
-    // and 1bit in MSB of byte #52 (== 0)
-    set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(0));
-    
 }
 
 bool Driver::set_dc_data(
@@ -487,19 +492,22 @@ bool Driver::set_dc_data(
     // set the bits
     for (int8_t blue_idx = 6; blue_idx > -1; blue_idx--)
     {
-        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(blue_idx));
+        uint8_t bit_idx = byte_pos.next_bit_idx();
+        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], bit_idx, blue_value.test(blue_idx));
     }
 
     // LED G15  
     for (int8_t green_idx = 6; green_idx > -1; green_idx--)        
     {
-        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(green_idx));
+        uint8_t bit_idx = byte_pos.next_bit_idx();
+        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], bit_idx, green_value.test(green_idx));
     }
 
     // LED R15
     for (int8_t red_idx = 6; red_idx > -1; red_idx--)        
     {            
-        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(red_idx));
+        uint8_t bit_idx = byte_pos.next_bit_idx();
+        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], bit_idx, red_value.test(red_idx));
     }
 
     return true;
@@ -559,15 +567,18 @@ bool Driver::set_gs_data(
 
     for (int8_t blue_idx = 15; blue_idx > -1; blue_idx--)
     {
-        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), blue_value.test(blue_idx));
+        uint8_t bit_idx = byte_pos.next_bit_idx();
+        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], bit_idx, blue_value.test(blue_idx));
     }
     for (int8_t green_idx = 15; green_idx > -1; green_idx--)
     {
-        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), green_value.test(green_idx));
+        uint8_t bit_idx = byte_pos.next_bit_idx();
+        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], bit_idx, green_value.test(green_idx));
     }
     for (int8_t red_idx = 15; red_idx > -1; red_idx--)
     {
-        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], byte_pos.next_bit_idx(), red_value.test(red_idx));
+        uint8_t bit_idx = byte_pos.next_bit_idx();
+        set_value_nth_bit(m_common_byte_register[byte_pos.get_byte_idx()], bit_idx, red_value.test(red_idx));
     }        
 
     return true;
@@ -588,25 +599,35 @@ void Driver::set_all_gs_data(
 
 void Driver::send_data()
 {
-    // clock the data through and latch
-    
-#ifdef USE_HAL_DRIVER
+    // enable gsclk 
     HAL_GPIO_WritePin(m_gsclk_port, m_gsclk_pin, GPIO_PIN_SET);
+
+    // clock the data through and latch
+#ifdef USE_HAL_DRIVER
+//    HAL_GPIO_WritePin(m_gsclk_port, m_gsclk_pin, GPIO_PIN_SET);
     HAL_StatusTypeDef res = HAL_SPI_Transmit(&m_spi_interface, (uint8_t*)m_common_byte_register.data(), m_common_reg_size_bytes, 0x0000'000F);
     UNUSED(res);
-    HAL_GPIO_WritePin(m_gsclk_port, m_gsclk_pin, GPIO_PIN_RESET);
-#endif
+ //   HAL_GPIO_WritePin(m_gsclk_port, m_gsclk_pin, GPIO_PIN_RESET);
+
     toggle_latch();
+#endif
 }
 
 void Driver::toggle_latch()
 {
 #ifdef USE_HAL_DRIVER
-    HAL_Delay(m_latch_delay_ms);
+    // disable the gsclk
+    HAL_GPIO_WritePin(m_gsclk_port, m_gsclk_pin, GPIO_PIN_RESET);   
+    
+    // toggle the latch pin
+//    HAL_Delay(m_latch_delay_ms);
     HAL_GPIO_WritePin(m_lat_port, m_lat_pin, GPIO_PIN_SET);
-    HAL_Delay(m_latch_delay_ms);
+//    HAL_Delay(m_latch_delay_ms);
     HAL_GPIO_WritePin(m_lat_port, m_lat_pin, GPIO_PIN_RESET);
-    HAL_Delay(m_latch_delay_ms);
+//    HAL_Delay(m_latch_delay_ms);
+
+
+
 #endif
 }
 
@@ -616,14 +637,14 @@ void Driver::flush_common_register()
     {
         byte = 0x00;
     }
-    send_data();
+    // send_data();
 }
 
 void Driver::print_common_bits()
 {
 #ifdef USE_RTT
     SEGGER_RTT_printf(0, "\r\n");
-    for (uint16_t idx = 45; idx < 53; idx++)
+    for (uint16_t idx = 0; idx < 8; idx++)
     {
         SEGGER_RTT_printf(0, "%u ", +m_common_byte_register[idx]);
     }
