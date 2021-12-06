@@ -599,11 +599,12 @@ void Driver::set_all_gs_data(
 
 void Driver::send_data()
 {
+#ifdef USE_HAL_DRIVER
     // enable gsclk 
     HAL_GPIO_WritePin(m_gsclk_port, m_gsclk_pin, GPIO_PIN_SET);
 
     // clock the data through and latch
-#ifdef USE_HAL_DRIVER
+
 //    HAL_GPIO_WritePin(m_gsclk_port, m_gsclk_pin, GPIO_PIN_SET);
     HAL_StatusTypeDef res = HAL_SPI_Transmit(&m_spi_interface, (uint8_t*)m_common_byte_register.data(), m_common_reg_size_bytes, 0x0000'000F);
     UNUSED(res);
