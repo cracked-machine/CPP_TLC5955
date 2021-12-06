@@ -71,23 +71,33 @@ public:
     uint16_t next_bit_idx()
     {     
 
-
-        --m_bit_position;
-
-        if (m_bit_position == std::numeric_limits<uint16_t>::max())
+        if (m_bit_position == 0)
         {
-            // reset the bit position back to the max value
             m_bit_position = m_max_bit_idx;
-            ++m_byte_position;
-            --m_bit_position;
+            m_bit_position--;
+            m_byte_position++;
+        }
+        else
+        {
+            m_bit_position--;
         }
         
-        #ifdef STDOUT_DEBUG
-            std::cout << "Byte:" << m_byte_position << " Bit:" << m_bit_position << std::endl;
-        #endif      
+        return m_bit_position;
+
+        // if (m_bit_position == std::numeric_limits<uint16_t>::max())
+        // {
+        //     // reset the bit position back to the max value
+        //     m_bit_position = m_max_bit_idx;
+        //     ++m_byte_position;
+        //     --m_bit_position;
+        // }
+        
+        // #ifdef STDOUT_DEBUG
+        //     std::cout << "Byte:" << m_byte_position << " Bit:" << m_bit_position << std::endl;
+        // #endif      
         
 
-        return m_bit_position;
+        // return m_bit_position;
     }
 
     // @brief Convenience function. Calls next_bit_idx() function N times.
