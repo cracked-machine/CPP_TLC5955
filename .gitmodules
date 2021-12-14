@@ -1,0 +1,3 @@
+[submodule "embedded_utils"]
+	path = embedded_utils
+	url = https://github.com/cracked-machine/embedded_utils
