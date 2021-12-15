@@ -87,6 +87,19 @@ void Driver::set_dot_correction_cmd_all(uint8_t pwm)
 	}
 }
 
+void Driver::set_greyscale_cmd_rgb(uint16_t blue_pwm, uint16_t green_pwm, uint16_t red_pwm)
+{
+    const std::bitset<m_gs_data_size> blue_gs_pwm_cmd {blue_pwm}; 
+    const std::bitset<m_gs_data_size> green_gs_pwm_cmd {green_pwm}; 
+    const std::bitset<m_gs_data_size> red_gs_pwm_cmd {red_pwm}; 
+    for (uint16_t gs_idx = 0; gs_idx < m_num_leds_per_chip; gs_idx++)
+    {
+    	bitsetter.add_bitset(m_common_bit_register, blue_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * gs_idx * m_num_colour_chan));
+        bitsetter.add_bitset(m_common_bit_register, green_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * gs_idx * m_num_colour_chan) + m_gs_data_size);
+        bitsetter.add_bitset(m_common_bit_register, red_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * gs_idx * m_num_colour_chan) + (m_gs_data_size * 2));
+    }    
+}
+
 void Driver::set_greyscale_cmd_all(uint16_t pwm)
 {
     const std::bitset<m_gs_data_size> gs_pwm_cmd {pwm}; 
@@ -98,6 +111,7 @@ void Driver::set_greyscale_cmd_all(uint16_t pwm)
 
 void Driver::process_register()
 {
+    bitsetter.print_bits(m_common_bit_register);
     bitsetter.bitset_to_bytearray(m_common_byte_register, m_common_bit_register);
 }
 

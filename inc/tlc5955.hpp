@@ -68,16 +68,45 @@ public:
     // @note
     // @param latch 
     void set_latch_cmd(const bool latch);
+
+    // @brief Set the function cmd object
+    // 
+    // @param dsprpt 
+    // @param tmgrst 
+    // @param rfresh 
+    // @param espwm 
+    // @param lsdvlt 
     void set_function_cmd(const bool dsprpt, const bool tmgrst, const bool rfresh, const bool espwm, const bool lsdvlt);
+
+    // @brief Set the global brightness cmd object
+    // 
+    // @param blue 
+    // @param green 
+    // @param red 
     void set_global_brightness_cmd(const uint8_t blue, const uint8_t green, const uint8_t red);
+
+    // @brief Set the max current cmd object
+    // 
+    // @param blue 
+    // @param green 
+    // @param red 
     void set_max_current_cmd(const uint8_t blue, const uint8_t green, const uint8_t red);
+
+    // @brief Set the dot correction cmd all object
+    // 
+    // @param pwm 
     void set_dot_correction_cmd_all(uint8_t pwm);
+
+    // @brief Set the greyscale cmd all object
+    // 
+    // @param pwm 
     void set_greyscale_cmd_all(uint16_t pwm);
 
-    void process_register();
+    void set_greyscale_cmd_rgb(uint16_t blue_pwm, uint16_t green_pwm, uint16_t red_pwm);
 
-    // @brief Helper function to print bytes as decimal values to RTT. USE_RTT must be defined.
-    void print_common_bits();
+    // @brief convert the common register bitset to common register byte array.
+    // 
+    void process_register();
 
 protected:
 
