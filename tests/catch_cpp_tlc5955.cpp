@@ -1,5 +1,25 @@
 
+// MIT License
 
+// Copyright (c) 2021 Chris Sutton
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
 #include <catch2/catch_all.hpp>
 #include <iostream>
@@ -30,7 +50,7 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
         });
 
         // run the flush command
-        leds_tester.flush_common_register();
+        leds_tester.reset();
 
         // check the bits are all cleared
         std::for_each (leds_tester.data_begin(), leds_tester.data_end(), [](auto &byte){
@@ -143,8 +163,8 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
         // bits      ====][======][======]
         // Bytes     #50    #51      #52    
 
-        const std::bitset<leds_tester.m_bc_data_resolution> preset_bc_test_pattern_0x55 {0b1010101};
-        const std::bitset<leds_tester.m_bc_data_resolution> preset_bc_test_pattern_0x2A {0b0101010};        
+        const std::bitset<leds_tester.m_bc_data_size> preset_bc_test_pattern_0x55 {0b1010101};
+        const std::bitset<leds_tester.m_bc_data_size> preset_bc_test_pattern_0x2A {0b0101010};        
 
         // set the bit pattern
         leds_tester.set_bc_data(
@@ -188,8 +208,8 @@ TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
         // bits      [======][
         // Bytes       #53    #54     
 
-        const std::bitset<leds_tester.m_mc_data_resolution> preset_mc_test_pattern_0x5 {0b101};
-        const std::bitset<leds_tester.m_mc_data_resolution> preset_mc_test_pattern_0x2 {0b010};
+        const std::bitset<leds_tester.m_mc_data_size> preset_mc_test_pattern_0x5 {0b101};
+        const std::bitset<leds_tester.m_mc_data_size> preset_mc_test_pattern_0x2 {0b010};
  
         // set bit pattern
         leds_tester.set_mc_data(
@@ -224,14 +244,14 @@ TEST_CASE("Greyscale bit tests", "[tlc5955]")
     tlc5955::tlc5955_tester leds_tester;
 
     // @brief Test Preset: all bits of one colour on 
-    const std::bitset<leds_tester.m_gs_data_resolution> preset_gs_test_on {0xFFFF};
+    const std::bitset<leds_tester.m_gs_data_size> preset_gs_test_on {0xFFFF};
     // @brief Test Preset: all bits of one colour off
-    const std::bitset<leds_tester.m_gs_data_resolution> preset_gs_test_off {0};
+    const std::bitset<leds_tester.m_gs_data_size> preset_gs_test_off {0};
 
     // @brief Test Preset: alternating bit pattern
-    const std::bitset<leds_tester.m_gs_data_resolution> preset_gs_test_pattern_0xAAAA {0b1010101010101010};
+    const std::bitset<leds_tester.m_gs_data_size> preset_gs_test_pattern_0xAAAA {0b1010101010101010};
     // @brief Test Preset: inverse alternating bit pattern
-    const std::bitset<leds_tester.m_gs_data_resolution> preset_gs_test_pattern_0x5555 {0b0101010101010101};
+    const std::bitset<leds_tester.m_gs_data_size> preset_gs_test_pattern_0x5555 {0b0101010101010101};
 
     SECTION("Invalid LED index")
     {
@@ -309,12 +329,12 @@ TEST_CASE("Dot Correction bit tests", "[tlc5955]")
     tlc5955::tlc5955_tester leds_tester;
 
     // @brief Test Preset: all bits of one colour on 
-    const std::bitset<leds_tester.m_dc_data_resolution> preset_dc_test_on {127};
+    const std::bitset<leds_tester.m_dc_data_size> preset_dc_test_on {127};
     // @brief Test Preset: all bits of one colour off
-    const std::bitset<leds_tester.m_dc_data_resolution> preset_dc_test_off {0};
+    const std::bitset<leds_tester.m_dc_data_size> preset_dc_test_off {0};
     // @brief Test Preset: alternating bits for positional testing
-    const std::bitset<leds_tester.m_dc_data_resolution> preset_dc_test_pattern_0x55 {0b1010101};
-    const std::bitset<leds_tester.m_dc_data_resolution> preset_dc_test_pattern_0x2A {0b0101010};
+    const std::bitset<leds_tester.m_dc_data_size> preset_dc_test_pattern_0x55 {0b1010101};
+    const std::bitset<leds_tester.m_dc_data_size> preset_dc_test_pattern_0x2A {0b0101010};
 
 
     // @brief Test out of bounds

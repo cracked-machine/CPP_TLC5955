@@ -1,4 +1,26 @@
 
+// MIT License
+
+// Copyright (c) 2021 Chris Sutton
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #include <stdint.h>
 #include <bitset>
 #include <array>
@@ -25,6 +47,8 @@
 
 namespace tlc5955 {
 
+
+
 // experimental code can be found here
 // https://godbolt.org/z/7bcsrK3aP
 
@@ -34,13 +58,15 @@ public:
 
     Driver() = default;
 
-    virtual ~Driver() = default;
-
     bool start_dma_transmit();
     bool pause_dma_transmit(bool pause);
    
-    // @brief Clears (zeroize) the common register and call send_data()
+    // @brief Clears (zeroize) the common register
     void reset();
+
+    // @brief Set the latch cmd object 
+    // @note
+    // @param latch 
     void set_latch_cmd(const bool latch);
     void set_function_cmd(const bool dsprpt, const bool tmgrst, const bool rfresh, const bool espwm, const bool lsdvlt);
     void set_global_brightness_cmd(const uint8_t blue, const uint8_t green, const uint8_t red);
@@ -53,52 +79,17 @@ public:
     // @brief Helper function to print bytes as decimal values to RTT. USE_RTT must be defined.
     void print_common_bits();
 
-
-
 protected:
-
-
-private:
-
-    embedded_utils::bitset_utils bitsetter;
-
-    // // @brief sections offsets for common register
-    // enum byte_offsets {
-    //     // @brief 1 for control data latch, 0 for greyscale data latch 
-    //     latch = 0U,
-    //     // @brief Used in control data latch.
-    //     ctrl_cmd = 0U,
-    //     // @brief Used in greyscale data latch. 
-    //     greyscale = 1U,
-    //     // @brief Used in control data latch. Don't care bits.
-    //     padding = 1U,
-    //     // @brief Used in control data latch.
-    //     function = 49U,
-    //     // @brief Used in control data latch.
-    //     brightness_control = 50U,
-    //     // @brief Used in control data latch.
-    //     max_current = 53U,
-    //     // @brief Used in control data latch.
-    //     dot_correct = 54U
-    // };
-
-            // @brief Predefined write command.
-    // section 8.3.2.3 "Control Data Latch" (page 21).
-    // section 8.3.2.2 "Grayscale (GS) Data Latch" (page 20).
-    // https://www.ti.com/lit/ds/symlink/tlc5955.pdf
-    std::bitset<8> m_ctrl_cmd {0x96};
-
-    // @brief Predefined flush command
-    std::bitset<8> m_flush_cmd {0};
 
     static const uint8_t m_common_reg_size_bytes {97};
     std::array<uint8_t, m_common_reg_size_bytes> m_common_byte_register{0};
 
-    // Bits required for correct control reg size
     static const uint16_t m_common_reg_size_bits {769};
-
     std::bitset<m_common_reg_size_bits> m_common_bit_register {0};
 
+private:
+    // @brief The bitset utility
+    embedded_utils::bitset_utils bitsetter;
 
      // @brief The number of daisy chained driver chips in the circuit.
     uint8_t m_num_driver_ics {1}; 
@@ -109,37 +100,54 @@ private:
     // @brief The number of LEDs per driver chip
     static const uint8_t m_num_leds_per_chip {16};
 
+    // @brief bits per latch select command
+    static const uint8_t m_select_cmd_size {1};  
+    // @brief bits per ctrl command
+    static const uint8_t m_ctrl_cmd_size {8}; 
+    // @brief bits per function command
+    static const uint8_t m_func_cmd_size {5};    
 
-    static const uint8_t m_bc_data_resolution {7};
-    static const uint8_t m_mc_data_resolution {3};
-    static const uint8_t m_dc_data_resolution {7};
-    static const uint8_t m_gs_data_resolution {16};
+    // @brief bits per brightness control data
+    static const uint8_t m_bc_data_size {7};
+    // @brief bits per max current data
+    static const uint8_t m_mc_data_size {3};
+    // @brief bits per dot correction data
+    static const uint8_t m_dc_data_size {7};
+    // @brief bits per grescale data
+    static const uint8_t m_gs_data_size {16};
 
-    // the size of each common register section
-    static const uint8_t m_latch_size_bits {1};                                                                             // 1U
-    static const uint8_t m_ctrl_cmd_size_bits {8};                                                                          // 8U
-    static constexpr uint16_t m_gs_data_one_led_size_bits {m_gs_data_resolution * m_num_colour_chan};                       // 48U
-    static constexpr uint16_t m_gs_data_section_size_bits {m_gs_data_resolution * m_num_leds_per_chip * m_num_colour_chan}; // 768U
-    static const uint8_t m_func_data_section_size_bits {5};                                                                 // 5U
-    static constexpr uint8_t m_bc_data_section_size_bits {m_bc_data_resolution * m_num_colour_chan};                        // 21U
-    static constexpr uint8_t m_mc_data_section_size_bits {m_mc_data_resolution * m_num_colour_chan};                        // 9U
-    static constexpr uint8_t m_dc_data_one_led_size_bits {m_dc_data_resolution * m_num_colour_chan};                        // 21U
-    static constexpr uint16_t m_dc_data_section_size_bits {m_dc_data_resolution * m_num_leds_per_chip * m_num_colour_chan}; // 336U
-    static constexpr uint16_t m_padding_section_size_bits {                                                                 // 389U
-        m_common_reg_size_bits  - m_latch_size_bits - m_ctrl_cmd_size_bits - m_func_data_section_size_bits - m_bc_data_section_size_bits - m_mc_data_section_size_bits - m_dc_data_section_size_bits
-    };
+    // @brief total bits for the greyscale latch
+    static constexpr uint16_t   m_gs_latch_size {m_gs_data_size * m_num_leds_per_chip * m_num_colour_chan};                                       
+    // @brief total bits for the brightness control latch 
+    static constexpr uint8_t    m_bc_latch_size {m_bc_data_size * m_num_colour_chan};                          
+    // @brief total bits for the max current latch 
+    static constexpr uint8_t    m_mc_latch_size {m_mc_data_size * m_num_colour_chan};                          
+    // @brief total bits for the dot correction latch 
+    static constexpr uint16_t   m_dc_latch_size {m_dc_data_size * m_num_leds_per_chip * m_num_colour_chan};    
+    // @brief total bits for the padding
+    static constexpr uint16_t   m_padding_size  {
+        m_common_reg_size_bits - (m_select_cmd_size + m_ctrl_cmd_size + m_func_cmd_size + m_bc_latch_size + m_mc_latch_size + m_dc_latch_size) };
 
-    std::bitset<tlc5955::Driver::m_padding_section_size_bits> m_padding {0x00};
+    // @brief select command latch offset
+    static constexpr uint8_t    m_select_cmd_offset {0};
+    // @brief control command latch offset
+    static constexpr uint8_t    m_ctrl_cmd_offset   { static_cast<uint8_t>  (m_select_cmd_offset    + m_select_cmd_size)    };  
+    // @brief padding offset
+    static constexpr uint8_t    m_padding_offset    { static_cast<uint8_t>  (m_ctrl_cmd_offset      + m_ctrl_cmd_size)      }; 
+    // @brief function command latch offset
+    static constexpr uint16_t   m_func_cmd_offset   { static_cast<uint16_t> (m_padding_offset       + m_padding_size)       };  
+    // @brief brightness control data latch offset
+    static constexpr uint16_t   m_bc_data_offset    { static_cast<uint16_t> (m_func_cmd_offset      + m_func_cmd_size)      };  
+    // @brief max current data latch offset
+    static constexpr uint16_t   m_mc_data_offset    { static_cast<uint16_t> (m_bc_data_offset       + m_bc_latch_size)      };  
+    // @brief dot correctness data latch offset
+    static constexpr uint16_t   m_dc_data_offset    { static_cast<uint16_t> (m_mc_data_offset       + m_mc_latch_size)      }; 
+    // @brief greyscale data latch offset
+    static constexpr uint8_t    m_gs_data_offset    { static_cast<uint8_t>  (m_ctrl_cmd_offset)};                             
 
-    // the offset of each common register section
-    static const uint8_t m_latch_offset {0};
-    static constexpr uint8_t m_ctrl_cmd_offset {static_cast<uint8_t>(m_latch_offset + m_latch_size_bits)};                  // 1U
-    static constexpr uint8_t m_gs_data_offset {static_cast<uint8_t>(m_ctrl_cmd_offset)};                                    // 9U - used in gs data latch only
-    static constexpr uint8_t m_padding_offset {static_cast<uint8_t>(m_ctrl_cmd_offset + m_ctrl_cmd_size_bits)};             // 9U - used in ctrl data latch only
-    static constexpr uint16_t m_func_data_offset {static_cast<uint16_t>(m_padding_offset + m_padding_section_size_bits)};   // 9U
-    static constexpr uint16_t m_bc_data_offset {static_cast<uint16_t>(m_func_data_offset + m_func_data_section_size_bits)}; // 398U
-    static constexpr uint16_t m_mc_data_offset {static_cast<uint16_t>(m_bc_data_offset + m_bc_data_section_size_bits)};     // 424U
-    static constexpr uint16_t m_dc_data_offset {static_cast<uint16_t>(m_mc_data_offset + m_mc_data_section_size_bits)};     // 433U
+    // @brief padding 
+    std::bitset<m_padding_size> m_padding {0x00};
+    std::bitset<m_ctrl_cmd_size> m_ctrl_cmd {0x96};
 
 
     // void enable_gpio_output_only();
