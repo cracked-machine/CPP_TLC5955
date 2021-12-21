@@ -27,30 +27,28 @@
 
 #include <bitset_utils.hpp>
 
-#ifdef USE_HAL_DRIVER
+#if defined(USE_TLC5955_HAL_DRIVER) || defined(USE_TLC5955_LL_DRIVER)
     // Required when using GCC 10.3.1 arm-none-eabi 
     // warning: compound assignment with 'volatile'-qualified left operand is deprecated [-Wvolatile]
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wvolatile"
 		#include "main.h"	
+        #include "spi.h"
 	#pragma GCC diagnostic pop
-
-
-
 #else
     #define UNUSED(X) (void)X 
 #endif
 
 
 
-#include <ssd1306.hpp>
 
 namespace tlc5955 {
 
-
-
-// experimental code can be found here
-// https://godbolt.org/z/7bcsrK3aP
+enum class dma
+{
+    enable,
+    disable
+};
 
 class Driver
 {
@@ -58,7 +56,8 @@ public:
 
     Driver() = default;
 
-    bool start_dma_transmit();
+    bool enable_spi(dma use_dma);
+    bool send_blocking_transmit();
     bool pause_dma_transmit(bool pause);
    
     // @brief Clears (zeroize) the common register
@@ -71,11 +70,11 @@ public:
 
     // @brief Set the function cmd object
     // 
-    // @param dsprpt 
-    // @param tmgrst 
-    // @param rfresh 
-    // @param espwm 
-    // @param lsdvlt 
+    // @param dsprpt If false entire display period only executes one time after a LAT, if true entire display period repeats
+    // @param tmgrst If false outputs are not forced off, if true outputs are forced off at latch
+    // @param rfresh If false GS data latch at the next LAT rising edge, if true GS data latch at the 65,536th GSCLK after the LAT rising edge
+    // @param espwm If false conventional PWM, if true ES-PWM enabled
+    // @param lsdvlt If false the LSD threshold voltage is VCC × 70%. if true the LSD threshold voltage is VCC × 90%.
     void set_function_cmd(const bool dsprpt, const bool tmgrst, const bool rfresh, const bool espwm, const bool lsdvlt);
 
     // @brief Set the global brightness cmd object
@@ -178,28 +177,36 @@ private:
     std::bitset<m_padding_size> m_padding {0x00};
     std::bitset<m_ctrl_cmd_size> m_ctrl_cmd {0x96};
 
-
     // void enable_gpio_output_only();
-#ifdef USE_HAL_DRIVER 
-    // @brief The HAL SPI interface
-    SPI_HandleTypeDef m_spi_interface {hspi2};
-    // @brief Latch GPIO pin
-	uint16_t m_lat_pin {TLC5955_SPI2_LAT_Pin};
-    // @brief Latch terminal GPIO port
-    GPIO_TypeDef* m_lat_port {TLC5955_SPI2_LAT_GPIO_Port};
-    // @brief GreyScale clock GPIO pin
-    uint16_t m_gsclk_pin {TLC5955_SPI2_GSCLK_Pin};
-    // @brief GreyScale clock GPIO port
-    GPIO_TypeDef* m_gsclk_port {TLC5955_SPI2_GSCLK_GPIO_Port};
-    // @brief SPI MOSI GPIO pin
-    uint16_t m_mosi_pin {TLC5955_SPI2_MOSI_Pin};
-    // @brief SPI MOSI GPIO port
-    GPIO_TypeDef* m_mosi_port {TLC5955_SPI2_MOSI_GPIO_Port};
-    // @brief SPI Clock GPIO pin
-    uint16_t m_sck_pin {TLC5955_SPI2_SCK_Pin};
-    // @brief SPI Clock GPIO port
-    GPIO_TypeDef* m_sck_port {TLC5955_SPI2_SCK_GPIO_Port};
-#endif	
+    #ifdef USE_TLC5955_HAL_DRIVER 
+        // @brief The HAL SPI interface
+        SPI_HandleTypeDef m_spi_interface {hspi2};
+    #elif USE_TLC5955_LL_DRIVER
+        SPI_TypeDef *m_spi_port {SPI2};
+    #endif
+    #if defined(USE_TLC5955_HAL_DRIVER) || defined(USE_TLC5955_LL_DRIVER)
+
+        // @brief Latch terminal GPIO port
+        GPIO_TypeDef* m_lat_port {TLC5955_SPI2_LAT_GPIO_Port};
+        // @brief Latch GPIO pin
+        uint16_t m_lat_pin {TLC5955_SPI2_LAT_Pin};
+
+        // @brief GreyScale clock GPIO port
+        GPIO_TypeDef* m_gsclk_port {TLC5955_SPI2_GSCLK_GPIO_Port};
+        // @brief GreyScale clock GPIO pin
+        uint16_t m_gsclk_pin {TLC5955_SPI2_GSCLK_Pin};
+
+        // @brief SPI MOSI GPIO port
+        GPIO_TypeDef* m_mosi_port {TLC5955_SPI2_MOSI_GPIO_Port};
+        // @brief SPI MOSI GPIO pin
+        uint16_t m_mosi_pin {TLC5955_SPI2_MOSI_Pin};
+
+        // @brief SPI Clock GPIO port
+        GPIO_TypeDef* m_sck_port {TLC5955_SPI2_SCK_GPIO_Port};        
+        // @brief SPI Clock GPIO pin
+        uint16_t m_sck_pin {TLC5955_SPI2_SCK_Pin};
+
+    #endif	
 
 };
 
