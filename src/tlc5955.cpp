@@ -10,18 +10,90 @@
 #ifdef USE_RTT
     #include <SEGGER_RTT.h>
 #endif
+
+
+#if defined(USE_SSD1306_LL_DRIVER)
+	#include "ll_spi_utils.hpp"
+#endif
+
 namespace tlc5955 
 {
 
-bool Driver::start_dma_transmit()
+bool Driver::enable_spi(dma use_dma)
 {
-    #ifdef USE_HAL_DRIVER 
-        return HAL_SPI_Transmit_DMA(&m_spi_interface, m_common_byte_register.data(), m_common_byte_register.size());      
+    if(use_dma == dma::enable)
+    {
+        #ifdef USE_TLC5955_HAL_DRIVER 
+            return HAL_SPI_Transmit_DMA(&m_spi_port, m_common_byte_register.data(), m_common_byte_register.size());  
+        #elif USE_TLC5955_LL_DRIVER
+            return true;
+        #else
+            // we don't care about SPI for x86-based unit testing
+            return true;
+        #endif
+    }
+    else
+    {
+        #if USE_TLC5955_LL_DRIVER
+            LL_SPI_Enable(m_spi_port);
+            return LL_SPI_IsEnabled(m_spi_port);
+        #endif
+    }
+    return false;
+
+}
+
+bool Driver::send_blocking_transmit()
+{
+    #ifdef USE_TLC5955_HAL_DRIVER 
+        if (IS_SPI_DMA_HANDLE(hspi->hdmatx))
+        {
+            return false;
+        }
+        else
+        {
+            return HAL_SPI_Transmit(&m_spi_port, m_common_byte_register.data(), m_common_byte_register.size(), 0);
+        }
+    #elif USE_TLC5955_LL_DRIVER
+        // we don't want to be here if DMA is enabled
+        if (LL_SPI_IsEnabledDMAReq_TX(m_spi_port)) { return false; }
+        
+            // start the GSCLK
+            LL_GPIO_SetOutputPin(m_gsclk_port, m_gsclk_pin);
+        
+        // send the bytes
+        for (auto &byte: m_common_byte_register)
+        {
+            LL_SPI_TransmitData8(m_spi_port, byte);
+        }      
+
+        // check the data was all clocked into the IC before latching
+        if (!embedded_utils::LowLevelSPIUtils<SPI_TypeDef>::check_txe_flag_status(m_spi_port))
+        {
+            #if defined(USE_RTT) 
+                SEGGER_RTT_printf(0, "tlc5955::Driver::send_blocking_transmit(): Tx buffer is full"); 
+            #endif
+        }
+        if (!embedded_utils::LowLevelSPIUtils<SPI_TypeDef>::check_bsy_flag_status(m_spi_port))
+        {
+            #if defined(USE_RTT) 
+                SEGGER_RTT_printf(0, "tlc5955::Driver::send_blocking_transmit(); SPI bus is busy"); 
+            #endif
+        }  
+
+        // stop the GSCLK
+        LL_GPIO_ResetOutputPin(m_gsclk_port, m_gsclk_pin);
+
+        // toggle the pin to latch the register contents
+        LL_GPIO_SetOutputPin(m_lat_port, m_lat_pin);
+        LL_GPIO_ResetOutputPin(m_lat_port, m_lat_pin);
+        return true;            
     #else
         // we don't care about SPI for x86-based unit testing
         return true;
     #endif
 }
+
 
 // @brief class to implement TLC5955 LED Driver IC
 // Refer to datasheet - https://www.ti.com/lit/ds/symlink/tlc5955.pdf
