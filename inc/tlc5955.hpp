@@ -191,10 +191,10 @@ private:
         // @brief Latch GPIO pin
         uint16_t m_lat_pin {TLC5955_SPI2_LAT_Pin};
 
-        // @brief GreyScale clock GPIO port
-        GPIO_TypeDef* m_gsclk_port {TLC5955_SPI2_GSCLK_GPIO_Port};
-        // @brief GreyScale clock GPIO pin
-        uint16_t m_gsclk_pin {TLC5955_SPI2_GSCLK_Pin};
+        // // @brief GreyScale clock GPIO port
+        // GPIO_TypeDef* m_gsclk_port {TLC5955_SPI2_GSCLK_GPIO_Port};
+        // // @brief GreyScale clock GPIO pin
+        // uint16_t m_gsclk_pin {TLC5955_SPI2_GSCLK_Pin};
 
         // @brief SPI MOSI GPIO port
         GPIO_TypeDef* m_mosi_port {TLC5955_SPI2_MOSI_GPIO_Port};

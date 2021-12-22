@@ -36,7 +36,12 @@ bool Driver::enable_spi(dma use_dma)
     {
         #if USE_TLC5955_LL_DRIVER
             LL_SPI_Enable(m_spi_port);
-            return LL_SPI_IsEnabled(m_spi_port);
+            // set the max freq (16MHz) for PWM when TIM4_ARR is also 1.
+            LL_TIM_OC_SetCompareCH1(TIM4, 0x1);
+            // enable the timer but not the output
+            LL_TIM_EnableCounter(TIM4);    
+            
+            return LL_SPI_IsEnabled(m_spi_port) && LL_TIM_IsEnabledCounter(TIM4);
         #endif
     }
     return false;
@@ -58,31 +63,31 @@ bool Driver::send_blocking_transmit()
         // we don't want to be here if DMA is enabled
         if (LL_SPI_IsEnabledDMAReq_TX(m_spi_port)) { return false; }
         
-            // start the GSCLK
-            LL_GPIO_SetOutputPin(m_gsclk_port, m_gsclk_pin);
+        // resume the GSCLK - enable the timer output
+        LL_TIM_CC_EnableChannel(TIM4, LL_TIM_CHANNEL_CH1);
         
         // send the bytes
         for (auto &byte: m_common_byte_register)
         {
             LL_SPI_TransmitData8(m_spi_port, byte);
-        }      
+        }     
 
         // check the data was all clocked into the IC before latching
-        if (!embedded_utils::LowLevelSPIUtils<SPI_TypeDef>::check_txe_flag_status(m_spi_port))
+        if (!embedded_utils::LowLevelSPIUtils::check_txe_flag_status(m_spi_port))
         {
             #if defined(USE_RTT) 
                 SEGGER_RTT_printf(0, "tlc5955::Driver::send_blocking_transmit(): Tx buffer is full"); 
             #endif
         }
-        if (!embedded_utils::LowLevelSPIUtils<SPI_TypeDef>::check_bsy_flag_status(m_spi_port))
+        if (!embedded_utils::LowLevelSPIUtils::check_bsy_flag_status(m_spi_port))
         {
             #if defined(USE_RTT) 
                 SEGGER_RTT_printf(0, "tlc5955::Driver::send_blocking_transmit(); SPI bus is busy"); 
             #endif
         }  
 
-        // stop the GSCLK
-        LL_GPIO_ResetOutputPin(m_gsclk_port, m_gsclk_pin);
+        // pause the GSCLK - disable the timer output
+        LL_TIM_CC_DisableChannel(TIM4, LL_TIM_CHANNEL_CH1);
 
         // toggle the pin to latch the register contents
         LL_GPIO_SetOutputPin(m_lat_port, m_lat_pin);
