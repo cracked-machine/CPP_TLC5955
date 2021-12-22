@@ -73,13 +73,14 @@ bool Driver::send_blocking_transmit()
         }     
 
         // check the data was all clocked into the IC before latching
-        if (!embedded_utils::LowLevelSPIUtils::check_txe_flag_status(m_spi_port))
+        embedded_utils::LowLevelSPIUtils spi_utils;
+        if (!spi_utils.check_txe_flag_status(m_spi_port))
         {
             #if defined(USE_RTT) 
                 SEGGER_RTT_printf(0, "tlc5955::Driver::send_blocking_transmit(): Tx buffer is full"); 
             #endif
         }
-        if (!embedded_utils::LowLevelSPIUtils::check_bsy_flag_status(m_spi_port))
+        if (!spi_utils.check_bsy_flag_status(m_spi_port))
         {
             #if defined(USE_RTT) 
                 SEGGER_RTT_printf(0, "tlc5955::Driver::send_blocking_transmit(); SPI bus is busy"); 
