@@ -5,16 +5,14 @@
 #include <cstring>
 
 
-#include <bitset_utils.hpp>
-
 #ifdef USE_RTT
     #include <SEGGER_RTT.h>
 #endif
 
+#include <ll_spi_utils.hpp>
+    
 
-#if defined(USE_SSD1306_LL_DRIVER)
-	#include <ll_spi_utils.hpp>
-#endif
+
 
 namespace tlc5955 
 {
@@ -73,14 +71,14 @@ bool Driver::send_blocking_transmit()
         }     
 
         // check the data was all clocked into the IC before latching
-        embedded_utils::LowLevelSPIUtils spi_utils;
-        if (!spi_utils.check_txe_flag_status(m_spi_port))
+
+        if (!embedded_utils::LowLevelSPIUtils::check_txe_flag_status(m_spi_port, 10))
         {
             #if defined(USE_RTT) 
                 SEGGER_RTT_printf(0, "tlc5955::Driver::send_blocking_transmit(): Tx buffer is full"); 
             #endif
         }
-        if (!spi_utils.check_bsy_flag_status(m_spi_port))
+        if (!embedded_utils::LowLevelSPIUtils::check_bsy_flag_status(m_spi_port, 10))
         {
             #if defined(USE_RTT) 
                 SEGGER_RTT_printf(0, "tlc5955::Driver::send_blocking_transmit(); SPI bus is busy"); 

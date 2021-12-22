@@ -21,26 +21,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#ifndef __TLC5955_HPP__
+#define __TLC5955_HPP__
+
 #include <stdint.h>
 #include <bitset>
 #include <array>
 
-#include <bitset_utils.hpp>
+#if defined(USE_SSD1306_HAL_DRIVER) || defined(USE_SSD1306_LL_DRIVER)
 
-#if defined(USE_TLC5955_HAL_DRIVER) || defined(USE_TLC5955_LL_DRIVER)
-    // Required when using GCC 10.3.1 arm-none-eabi 
-    // warning: compound assignment with 'volatile'-qualified left operand is deprecated [-Wvolatile]
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wvolatile"
-		#include "main.h"	
-        #include "spi.h"
+		#include "main.h"
+		#include "spi.h"	
 	#pragma GCC diagnostic pop
+
 #else
-    #define UNUSED(X) (void)X 
+	// only used when unit testing on x86
+	#include <iostream>
 #endif
 
+#if defined(USE_SSD1306_LL_DRIVER)
+    #include <bitset_utils.hpp>
 
-
+#endif
+    
 
 namespace tlc5955 {
 
@@ -211,4 +216,6 @@ private:
 };
 
 
-} // tlc5955
+} // namespace tlc5955
+
+#endif // __TLC5955_HPP__
