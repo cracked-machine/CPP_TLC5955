@@ -72,13 +72,13 @@ bool Driver::send_blocking_transmit()
 
         // check the data was all clocked into the IC before latching
 
-        if (!embedded_utils::LowLevelSPIUtils::check_txe_flag_status(m_spi_port, 10))
+        if (!embed_utils::spi::ll_wait_for_txe_flag(m_spi_port, 10))
         {
             #if defined(USE_RTT) 
                 SEGGER_RTT_printf(0, "tlc5955::Driver::send_blocking_transmit(): Tx buffer is full"); 
             #endif
         }
-        if (!embedded_utils::LowLevelSPIUtils::check_bsy_flag_status(m_spi_port, 10))
+        if (!embed_utils::spi::ll_wait_for_bsy_flag(m_spi_port, 10))
         {
             #if defined(USE_RTT) 
                 SEGGER_RTT_printf(0, "tlc5955::Driver::send_blocking_transmit(); SPI bus is busy"); 
@@ -110,14 +110,14 @@ void Driver::reset()
 void Driver::set_latch_cmd(bool latch)
 {
     std::bitset<m_select_cmd_size> latch_cmd {latch};
-    bitsetter.add_bitset(m_common_bit_register, latch_cmd, m_select_cmd_offset);
+    embed_utils::bit_manip::add_bitset(m_common_bit_register, latch_cmd, m_select_cmd_offset);
 
     // if the latch is 1 then we also need to add the ctrl command and the padding
     // See "8.3.2 Register and Data Latch Configuration" of the datasheet
     if (latch)
     {
-        bitsetter.add_bitset(m_common_bit_register, m_ctrl_cmd, m_ctrl_cmd_offset);
-        bitsetter.add_bitset(m_common_bit_register, m_padding, m_padding_offset);
+        embed_utils::bit_manip::add_bitset(m_common_bit_register, m_ctrl_cmd, m_ctrl_cmd_offset);
+        embed_utils::bit_manip::add_bitset(m_common_bit_register, m_padding, m_padding_offset);
     }
 }
 
@@ -129,7 +129,7 @@ void Driver::set_function_cmd(const bool dsprpt, const bool tmgrst, const bool r
     function_cmd.set(2, rfresh);
     function_cmd.set(3, espwm);
     function_cmd.set(4, lsdvlt);
-    bitsetter.add_bitset(m_common_bit_register, function_cmd, m_func_cmd_offset);
+    embed_utils::bit_manip::add_bitset(m_common_bit_register, function_cmd, m_func_cmd_offset);
 }
 
 void Driver::set_global_brightness_cmd(const uint8_t blue, const uint8_t green, const uint8_t red)
@@ -138,9 +138,9 @@ void Driver::set_global_brightness_cmd(const uint8_t blue, const uint8_t green, 
     const std::bitset<m_bc_data_size> green_cmd {green};
     const std::bitset<m_bc_data_size> red_cmd {red};
     
-    bitsetter.add_bitset(m_common_bit_register, blue_cmd, m_bc_data_offset);
-    bitsetter.add_bitset(m_common_bit_register, green_cmd, m_bc_data_offset + m_bc_data_size);
-    bitsetter.add_bitset(m_common_bit_register, red_cmd, m_bc_data_offset + m_bc_data_size * 2);
+    embed_utils::bit_manip::add_bitset(m_common_bit_register, blue_cmd, m_bc_data_offset);
+    embed_utils::bit_manip::add_bitset(m_common_bit_register, green_cmd, m_bc_data_offset + m_bc_data_size);
+    embed_utils::bit_manip::add_bitset(m_common_bit_register, red_cmd, m_bc_data_offset + m_bc_data_size * 2);
 }
 
 void Driver::set_max_current_cmd(const uint8_t blue, const uint8_t green, const uint8_t red)
@@ -149,9 +149,9 @@ void Driver::set_max_current_cmd(const uint8_t blue, const uint8_t green, const 
     const std::bitset<m_mc_data_size> green_cmd {green};
     const std::bitset<m_mc_data_size> red_cmd {red};
 
-    bitsetter.add_bitset(m_common_bit_register, blue_cmd, m_mc_data_offset);
-    bitsetter.add_bitset(m_common_bit_register, green_cmd, m_mc_data_offset + m_mc_data_size);
-    bitsetter.add_bitset(m_common_bit_register, red_cmd, m_mc_data_offset + m_mc_data_size * 2);
+    embed_utils::bit_manip::add_bitset(m_common_bit_register, blue_cmd, m_mc_data_offset);
+    embed_utils::bit_manip::add_bitset(m_common_bit_register, green_cmd, m_mc_data_offset + m_mc_data_size);
+    embed_utils::bit_manip::add_bitset(m_common_bit_register, red_cmd, m_mc_data_offset + m_mc_data_size * 2);
 }
 
 void Driver::set_dot_correction_cmd_all(uint8_t pwm)
@@ -159,7 +159,7 @@ void Driver::set_dot_correction_cmd_all(uint8_t pwm)
     const std::bitset<m_dc_data_size> dc_pwm_cmd {pwm};
     for (uint8_t dc_idx = 0; dc_idx < 48; dc_idx++)
 	{
-		bitsetter.add_bitset(m_common_bit_register, dc_pwm_cmd, m_dc_data_offset + m_dc_data_size * dc_idx);		
+		embed_utils::bit_manip::add_bitset(m_common_bit_register, dc_pwm_cmd, m_dc_data_offset + m_dc_data_size * dc_idx);		
 	}
 }
 
@@ -170,9 +170,9 @@ void Driver::set_greyscale_cmd_rgb(uint16_t blue_pwm, uint16_t green_pwm, uint16
     const std::bitset<m_gs_data_size> red_gs_pwm_cmd {red_pwm}; 
     for (uint16_t gs_idx = 0; gs_idx < m_num_leds_per_chip; gs_idx++)
     {
-    	bitsetter.add_bitset(m_common_bit_register, blue_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * gs_idx * m_num_colour_chan));
-        bitsetter.add_bitset(m_common_bit_register, green_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * gs_idx * m_num_colour_chan) + m_gs_data_size);
-        bitsetter.add_bitset(m_common_bit_register, red_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * gs_idx * m_num_colour_chan) + (m_gs_data_size * 2));
+    	embed_utils::bit_manip::add_bitset(m_common_bit_register, blue_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * gs_idx * m_num_colour_chan));
+        embed_utils::bit_manip::add_bitset(m_common_bit_register, green_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * gs_idx * m_num_colour_chan) + m_gs_data_size);
+        embed_utils::bit_manip::add_bitset(m_common_bit_register, red_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * gs_idx * m_num_colour_chan) + (m_gs_data_size * 2));
     }    
 }
 
@@ -181,14 +181,14 @@ void Driver::set_greyscale_cmd_all(uint16_t pwm)
     const std::bitset<m_gs_data_size> gs_pwm_cmd {pwm}; 
     for (uint16_t gs_idx = 0; gs_idx < 48; gs_idx++)
     {
-    	bitsetter.add_bitset(m_common_bit_register, gs_pwm_cmd, m_gs_data_offset + m_gs_data_size * gs_idx);
+    	embed_utils::bit_manip::add_bitset(m_common_bit_register, gs_pwm_cmd, m_gs_data_offset + m_gs_data_size * gs_idx);
     }    
 }
 
 void Driver::process_register()
 {
-    bitsetter.print_bits(m_common_bit_register);
-    bitsetter.bitset_to_bytearray(m_common_byte_register, m_common_bit_register);
+    embed_utils::bit_manip::print_bits(m_common_bit_register);
+    embed_utils::bit_manip::bitset_to_bytearray(m_common_byte_register, m_common_bit_register);
 }
 
 

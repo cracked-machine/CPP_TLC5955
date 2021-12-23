@@ -122,7 +122,7 @@ protected:
 
 private:
     // @brief The bitset utility
-    embedded_utils::bitset_utils bitsetter;
+    // embed_utils::bitset_utils bitsetter;
 
      // @brief The number of daisy chained driver chips in the circuit.
     uint8_t m_num_driver_ics {1}; 
