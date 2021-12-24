@@ -43,6 +43,7 @@
 
 #if defined(USE_SSD1306_LL_DRIVER)
     #include <bitset_utils.hpp>
+    #include <byte_utils.hpp>
 
 #endif
     
@@ -60,7 +61,8 @@ class Driver
 public:
 
     Driver() = default;
-
+    void spi2_init(void);
+    void gpio_init(void);
     bool enable_spi(dma use_dma);
     bool send_blocking_transmit();
     bool pause_dma_transmit(bool pause);
@@ -68,10 +70,13 @@ public:
     // @brief Clears (zeroize) the common register
     void reset();
 
-    // @brief Set the latch cmd object 
-    // @note
-    // @param latch 
-    void set_latch_cmd(const bool latch);
+    // @brief Disable SPI and use GPIOs to manually set the latch cmd 
+    // @param latch if true, also send the 8bit command and padding bits
+    void toggle_latch(const bool latch);
+
+    void set_ctrl_cmd();
+
+    void set_padding_bits();
 
     // @brief Set the function cmd object
     // 
@@ -114,10 +119,10 @@ public:
 
 protected:
 
-    static const uint8_t m_common_reg_size_bytes {97};
+    static const uint8_t m_common_reg_size_bytes {96};
     std::array<uint8_t, m_common_reg_size_bytes> m_common_byte_register{0};
 
-    static const uint16_t m_common_reg_size_bits {769};
+    static const uint16_t m_common_reg_size_bits {768};
     std::bitset<m_common_reg_size_bits> m_common_bit_register {0};
 
 private:
@@ -159,12 +164,12 @@ private:
     static constexpr uint16_t   m_dc_latch_size {m_dc_data_size * m_num_leds_per_chip * m_num_colour_chan};    
     // @brief total bits for the padding
     static constexpr uint16_t   m_padding_size  {
-        m_common_reg_size_bits - (m_select_cmd_size + m_ctrl_cmd_size + m_func_cmd_size + m_bc_latch_size + m_mc_latch_size + m_dc_latch_size) };
+        m_common_reg_size_bits - (m_ctrl_cmd_size + m_func_cmd_size + m_bc_latch_size + m_mc_latch_size + m_dc_latch_size) };
 
     // @brief select command latch offset
     static constexpr uint8_t    m_select_cmd_offset {0};
     // @brief control command latch offset
-    static constexpr uint8_t    m_ctrl_cmd_offset   { static_cast<uint8_t>  (m_select_cmd_offset    + m_select_cmd_size)    };  
+    static constexpr uint8_t    m_ctrl_cmd_offset   { static_cast<uint8_t>  (m_select_cmd_offset  /*+ m_select_cmd_size*/)  };  
     // @brief padding offset
     static constexpr uint8_t    m_padding_offset    { static_cast<uint8_t>  (m_ctrl_cmd_offset      + m_ctrl_cmd_size)      }; 
     // @brief function command latch offset
@@ -179,7 +184,7 @@ private:
     static constexpr uint8_t    m_gs_data_offset    { static_cast<uint8_t>  (m_ctrl_cmd_offset)};                             
 
     // @brief padding 
-    std::bitset<m_padding_size> m_padding {0x00};
+    std::bitset<m_padding_size> m_padding {0x01};
     std::bitset<m_ctrl_cmd_size> m_ctrl_cmd {0x96};
 
     // void enable_gpio_output_only();
