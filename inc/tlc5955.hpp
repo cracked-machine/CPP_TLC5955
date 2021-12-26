@@ -41,11 +41,11 @@
 	#include <iostream>
 #endif
 
-#if defined(USE_SSD1306_LL_DRIVER)
-    #include <bitset_utils.hpp>
-    #include <byte_utils.hpp>
 
-#endif
+#include <bitset_utils.hpp>
+#include <byte_utils.hpp>
+
+
     
 
 namespace tlc5955 {
@@ -191,7 +191,7 @@ private:
     #ifdef USE_TLC5955_HAL_DRIVER 
         // @brief The HAL SPI interface
         SPI_HandleTypeDef m_spi_interface {hspi2};
-    #elif USE_TLC5955_LL_DRIVER
+    #elif defined(USE_TLC5955_LL_DRIVER)
         SPI_TypeDef *m_spi_port {SPI2};
     #endif
     #if defined(USE_TLC5955_HAL_DRIVER) || defined(USE_TLC5955_LL_DRIVER)
