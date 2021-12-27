@@ -54,7 +54,7 @@ void Driver::reset()
     m_common_byte_register.fill(0);
 }
 
-void Driver::toggle_latch([[maybe_unused]] bool latch)
+void Driver::toggle_latch(bool latch [[maybe_unused]])
 {
     //std::bitset<m_select_cmd_size> latch_cmd {latch};
     //embed_utils::bit_manip::add_bitset(m_common_bit_register, latch_cmd, m_select_cmd_offset);
