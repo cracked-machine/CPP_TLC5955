@@ -18,32 +18,32 @@ namespace tlc5955
 
 
 
-bool Driver::enable_spi(dma use_dma)
-{
-    if(use_dma == dma::enable)
-    {
-        #if defined(USE_TLC5955_HAL_DRIVER)
-            return HAL_SPI_Transmit_DMA(&m_spi_port, m_common_byte_register.data(), m_common_byte_register.size());  
-        #elif defined(USE_TLC5955_LL_DRIVER)
-            return true;
-        #else
-            // we don't care about SPI for x86-based unit testing
-            return true;
-        #endif
-    }
-    else
-    {
-        #if defined(USE_TLC5955_LL_DRIVER)
-            spi2_init();
-            LL_SPI_Enable(m_spi_port);
+// bool Driver::enable_spi(dma use_dma)
+// {
+//     if(use_dma == dma::enable)
+//     {
+//         #if defined(USE_TLC5955_HAL_DRIVER)
+//             return HAL_SPI_Transmit_DMA(&m_spi_port, m_common_byte_register.data(), m_common_byte_register.size());  
+//         #elif defined(USE_TLC5955_LL_DRIVER)
+//             return true;
+//         #else
+//             // we don't care about SPI for x86-based unit testing
+//             return true;
+//         #endif
+//     }
+//     else
+//     {
+//         #if defined(USE_TLC5955_LL_DRIVER)
+//             spi2_init();
+//             LL_SPI_Enable(m_spi_port);
             
-            // return LL_SPI_IsEnabled(m_spi_port) && LL_TIM_IsEnabledCounter(TIM4);
-            return true;
-        #endif
-    }
-    return false;
+//             // return LL_SPI_IsEnabled(m_spi_port) && LL_TIM_IsEnabledCounter(TIM4);
+//             return true;
+//         #endif
+//     }
+//     return false;
 
-}
+// }
 
 
 // @brief class to implement TLC5955 LED Driver IC
@@ -69,16 +69,18 @@ void Driver::toggle_latch(bool latch [[maybe_unused]])
         if (latch)
         {
             // reset both SCK and MOSI
-            LL_GPIO_ResetOutputPin(TLC5955_SPI2_MOSI_GPIO_Port, TLC5955_SPI2_SCK_Pin); 
             LL_GPIO_ResetOutputPin(TLC5955_SPI2_MOSI_GPIO_Port, TLC5955_SPI2_MOSI_Pin); 
+            LL_GPIO_ResetOutputPin(TLC5955_SPI2_MOSI_GPIO_Port, TLC5955_SPI2_SCK_Pin); 
 
             // MOSI data clocked on high(1) rising edge of SCK
-            LL_GPIO_SetOutputPin(TLC5955_SPI2_MOSI_GPIO_Port, TLC5955_SPI2_SCK_Pin); 
             LL_GPIO_SetOutputPin(TLC5955_SPI2_MOSI_GPIO_Port, TLC5955_SPI2_MOSI_Pin); 
+            LL_GPIO_SetOutputPin(TLC5955_SPI2_MOSI_GPIO_Port, TLC5955_SPI2_SCK_Pin); 
+            
 
             // reset both SCK and MOSI
-            LL_GPIO_ResetOutputPin(TLC5955_SPI2_MOSI_GPIO_Port, TLC5955_SPI2_SCK_Pin); 
             LL_GPIO_ResetOutputPin(TLC5955_SPI2_MOSI_GPIO_Port, TLC5955_SPI2_MOSI_Pin); 
+            LL_GPIO_ResetOutputPin(TLC5955_SPI2_MOSI_GPIO_Port, TLC5955_SPI2_SCK_Pin); 
+            
 
         }
         else
@@ -99,6 +101,7 @@ void Driver::toggle_latch(bool latch [[maybe_unused]])
         // set PB7/PB8 to SPI
         spi2_init();
         LL_SPI_Enable(m_spi_port);
+        
     #endif  // USE_FULL_LL_DRIVER
 }
 
@@ -243,7 +246,7 @@ void Driver::gpio_init(void)
         LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOB);
         
         // TLC5955_SPI2_MOSI
-        LL_GPIO_ResetOutputPin(TLC5955_SPI2_MOSI_GPIO_Port, TLC5955_SPI2_MOSI_Pin); 
+        //LL_GPIO_SetOutputPin(TLC5955_SPI2_MOSI_GPIO_Port, TLC5955_SPI2_MOSI_Pin); 
         GPIO_InitStruct.Pin = TLC5955_SPI2_MOSI_Pin;
         GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
         GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
@@ -252,7 +255,7 @@ void Driver::gpio_init(void)
         LL_GPIO_Init(TLC5955_SPI2_MOSI_GPIO_Port, &GPIO_InitStruct);
 
         // TLC5955_SPI2_SCK
-        LL_GPIO_ResetOutputPin(TLC5955_SPI2_SCK_GPIO_Port, TLC5955_SPI2_SCK_Pin);
+        // LL_GPIO_ResetOutputPin(TLC5955_SPI2_SCK_GPIO_Port, TLC5955_SPI2_SCK_Pin);
         GPIO_InitStruct.Pin = TLC5955_SPI2_SCK_Pin;
         GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
         GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
@@ -266,59 +269,42 @@ void Driver::gpio_init(void)
 }
 void Driver::spi2_init(void)
 {
-    #if defined(USE_TLC5955_LL_DRIVER)   
-        LL_SPI_InitTypeDef SPI_InitStruct = {0,0,0,0,0,0,0,0,0,0};
+    #if defined(USE_TLC5955_LL_DRIVER)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wvolatile" 
 
-        LL_GPIO_InitTypeDef GPIO_InitStruct = {0,0,0,0,0,0};
+        /* Peripheral clock enable */;
+        SET_BIT(RCC->APBENR1, LL_APB1_GRP1_PERIPH_SPI2);
+        //LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOB);
 
-        /* Peripheral clock enable */
-        LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_SPI2);
+        // Enable GPIO PB7 (SPI2_MOSI)
+        LL_GPIO_SetPinSpeed(TLC5955_SPI2_MOSI_GPIO_Port, TLC5955_SPI2_MOSI_Pin, LL_GPIO_SPEED_FREQ_VERY_HIGH);
+        LL_GPIO_SetPinOutputType(TLC5955_SPI2_MOSI_GPIO_Port, TLC5955_SPI2_MOSI_Pin, LL_GPIO_OUTPUT_PUSHPULL);
+        LL_GPIO_SetPinPull(TLC5955_SPI2_MOSI_GPIO_Port, TLC5955_SPI2_MOSI_Pin, LL_GPIO_PULL_DOWN);
+        LL_GPIO_SetAFPin_0_7(TLC5955_SPI2_MOSI_GPIO_Port, TLC5955_SPI2_MOSI_Pin, LL_GPIO_AF_1);
+        LL_GPIO_SetPinMode(TLC5955_SPI2_MOSI_GPIO_Port, TLC5955_SPI2_MOSI_Pin, LL_GPIO_MODE_ALTERNATE);
 
-        LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOB);
-        /**SPI2 GPIO Configuration
-         PB7   ------> SPI2_MOSI
-        PB8   ------> SPI2_SCK
-        */
-        GPIO_InitStruct.Pin = TLC5955_SPI2_MOSI_Pin;
-        GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-        GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
-        GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-        GPIO_InitStruct.Pull = LL_GPIO_PULL_DOWN;
-        GPIO_InitStruct.Alternate = LL_GPIO_AF_1;
-        LL_GPIO_Init(TLC5955_SPI2_MOSI_GPIO_Port, &GPIO_InitStruct);
+        // Enable GPIO PB8 (SPI2_SCK)
+        LL_GPIO_SetPinSpeed(TLC5955_SPI2_SCK_GPIO_Port, TLC5955_SPI2_SCK_Pin, LL_GPIO_SPEED_FREQ_VERY_HIGH);
+        LL_GPIO_SetPinOutputType(TLC5955_SPI2_SCK_GPIO_Port, TLC5955_SPI2_SCK_Pin, LL_GPIO_OUTPUT_PUSHPULL);
+        LL_GPIO_SetPinPull(TLC5955_SPI2_SCK_GPIO_Port, TLC5955_SPI2_SCK_Pin, LL_GPIO_PULL_DOWN);
+        LL_GPIO_SetAFPin_8_15(TLC5955_SPI2_SCK_GPIO_Port, TLC5955_SPI2_SCK_Pin, LL_GPIO_AF_1);
+        LL_GPIO_SetPinMode(TLC5955_SPI2_SCK_GPIO_Port, TLC5955_SPI2_SCK_Pin, LL_GPIO_MODE_ALTERNATE);        
 
-        GPIO_InitStruct.Pin = TLC5955_SPI2_SCK_Pin;
-        GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-        GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
-        GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-        GPIO_InitStruct.Pull = LL_GPIO_PULL_DOWN;
-        GPIO_InitStruct.Alternate = LL_GPIO_AF_1;
-        LL_GPIO_Init(TLC5955_SPI2_SCK_GPIO_Port, &GPIO_InitStruct);
+        SET_BIT(SYSCFG->CFGR1, LL_SYSCFG_I2C_FASTMODEPLUS_PB7);
+        SET_BIT(SYSCFG->CFGR1, LL_SYSCFG_I2C_FASTMODEPLUS_PB8);
 
-        LL_SYSCFG_EnableFastModePlus(LL_SYSCFG_I2C_FASTMODEPLUS_PB7);
+        SPI2->CR1 = 0;
+        SPI2->CR1 |=    (LL_SPI_HALF_DUPLEX_TX | LL_SPI_MODE_MASTER | LL_SPI_POLARITY_LOW | LL_SPI_PHASE_1EDGE | 
+                        LL_SPI_NSS_SOFT | LL_SPI_BAUDRATEPRESCALER_DIV8 | LL_SPI_MSB_FIRST | LL_SPI_CRCCALCULATION_DISABLE);
 
-        LL_SYSCFG_EnableFastModePlus(LL_SYSCFG_I2C_FASTMODEPLUS_PB8);
+        MODIFY_REG(SPI2->CR2, SPI_CR2_FRF, LL_SPI_PROTOCOL_MOTOROLA);
 
-        /* USER CODE BEGIN SPI2_Init 1 */
+        CLEAR_BIT(SPI2->CR2, SPI_CR2_NSSP);
 
-        /* USER CODE END SPI2_Init 1 */
-        SPI_InitStruct.TransferDirection = LL_SPI_HALF_DUPLEX_TX;
-        SPI_InitStruct.Mode = LL_SPI_MODE_MASTER;
-        SPI_InitStruct.DataWidth = LL_SPI_DATAWIDTH_8BIT;
-        SPI_InitStruct.ClockPolarity = LL_SPI_POLARITY_HIGH;
-        SPI_InitStruct.ClockPhase = LL_SPI_PHASE_1EDGE;
-        SPI_InitStruct.NSS = LL_SPI_NSS_SOFT;
-        SPI_InitStruct.BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV8;
-        SPI_InitStruct.BitOrder = LL_SPI_MSB_FIRST;
-        SPI_InitStruct.CRCCalculation = LL_SPI_CRCCALCULATION_DISABLE;
-        SPI_InitStruct.CRCPoly = 7;
-        LL_SPI_Init(SPI2, &SPI_InitStruct);
-        LL_SPI_SetStandard(SPI2, LL_SPI_PROTOCOL_MOTOROLA);
-        LL_SPI_DisableNSSPulseMgt(SPI2);
-        /* USER CODE BEGIN SPI2_Init 2 */
+    #pragma GCC diagnostic pop  // ignored "-Wvolatile"  
+    #endif // defined(USE_TLC5955_LL_DRIVER)
 
-        /* USER CODE END SPI2_Init 2 */
-    #endif // USE_TLC5955_LL_DRIVER
 }
 
 

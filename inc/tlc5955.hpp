@@ -63,7 +63,7 @@ public:
     Driver() = default;
     void spi2_init(void);
     void gpio_init(void);
-    bool enable_spi(dma use_dma);
+    // bool enable_spi(dma use_dma);
     bool send_blocking_transmit();
     bool pause_dma_transmit(bool pause);
    
@@ -183,8 +183,10 @@ private:
     // @brief greyscale data latch offset
     static constexpr uint8_t    m_gs_data_offset    { static_cast<uint8_t>  (m_ctrl_cmd_offset)};                             
 
-    // @brief padding 
+    // @brief Don't Care bits. We set last bit to 1 for diagnostics purposes
     std::bitset<m_padding_size> m_padding {0x01};
+
+    // @brief The control command. Always 0x96 (0b10010110)
     std::bitset<m_ctrl_cmd_size> m_ctrl_cmd {0x96};
 
     // void enable_gpio_output_only();
