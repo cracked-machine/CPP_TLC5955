@@ -4,7 +4,7 @@
 #include <sstream>
 #include <cmath>
 #include <cstring>
-
+#include <cassert>
 
 #if defined(USE_RTT)
     #include <SEGGER_RTT.h>
@@ -17,35 +17,6 @@ namespace tlc5955
 {
 
 
-
-// bool Driver::enable_spi(dma use_dma)
-// {
-//     if(use_dma == dma::enable)
-//     {
-//         #if defined(USE_TLC5955_HAL_DRIVER)
-//             return HAL_SPI_Transmit_DMA(&m_spi_port, m_common_byte_register.data(), m_common_byte_register.size());  
-//         #elif defined(USE_TLC5955_LL_DRIVER)
-//             return true;
-//         #else
-//             // we don't care about SPI for x86-based unit testing
-//             return true;
-//         #endif
-//     }
-//     else
-//     {
-//         #if defined(USE_TLC5955_LL_DRIVER)
-//             spi2_init();
-//             LL_SPI_Enable(m_spi_port);
-            
-//             // return LL_SPI_IsEnabled(m_spi_port) && LL_TIM_IsEnabledCounter(TIM4);
-//             return true;
-//         #endif
-//     }
-//     return false;
-
-// }
-
-
 // @brief class to implement TLC5955 LED Driver IC
 // Refer to datasheet - https://www.ti.com/lit/ds/symlink/tlc5955.pdf
 void Driver::reset()
@@ -54,19 +25,22 @@ void Driver::reset()
     m_common_byte_register.fill(0);
 }
 
-void Driver::toggle_latch(bool latch [[maybe_unused]])
+void Driver::send_first_bit(DataLatchType latch_type [[maybe_unused]])
 {
     //std::bitset<m_select_cmd_size> latch_cmd {latch};
     //embed_utils::bit_manip::add_bitset(m_common_bit_register, latch_cmd, m_select_cmd_offset);
     #if defined(USE_FULL_LL_DRIVER)
+
         LL_SPI_Disable(SPI2);
 
         // set PB7/PB8 as GPIO outputs
         gpio_init();
-        
-        // if the latch is 1 then we also need to add the ctrl command and the padding
-        // See "8.3.2 Register and Data Latch Configuration" of the datasheet
-        if (latch)
+
+        // make sure LAT pin is low otherwise first latch may be skipped (and TLC5955 will initialise intermittently)
+        LL_GPIO_ResetOutputPin(m_lat_port, m_lat_pin);   
+
+        // "Control Data Latch" - Start SPI transacation by clocking in one high bit
+        if (latch_type == DataLatchType::control)
         {
             // reset both SCK and MOSI
             LL_GPIO_ResetOutputPin(TLC5955_SPI2_MOSI_GPIO_Port, TLC5955_SPI2_MOSI_Pin); 
@@ -83,6 +57,7 @@ void Driver::toggle_latch(bool latch [[maybe_unused]])
             
 
         }
+        // "GS Data Latch" - Start SPI transacation by clocking in one low bit
         else
         {
             // reset both SCK and MOSI
@@ -105,7 +80,7 @@ void Driver::toggle_latch(bool latch [[maybe_unused]])
     #endif  // USE_FULL_LL_DRIVER
 }
 
-bool Driver::send_blocking_transmit()
+bool Driver::send_spi_bytes(LatchPinOption latch_option)
 {
     #if defined(USE_TLC5955_HAL_DRIVER)
         if (IS_SPI_DMA_HANDLE(hspi->hdmatx))
@@ -120,9 +95,6 @@ bool Driver::send_blocking_transmit()
         // we don't want to be here if DMA is enabled
         if (LL_SPI_IsEnabledDMAReq_TX(m_spi_port)) { return false; }
             
-        // resume the GSCLK - enable the timer output
-        LL_TIM_CC_EnableChannel(TIM4, LL_TIM_CHANNEL_CH1);
-
         // send the bytes
         for (auto &byte: m_common_byte_register)
         {
@@ -144,13 +116,12 @@ bool Driver::send_blocking_transmit()
             }   
         }     
 
-        // pause the GSCLK - disable the timer output
-        LL_TIM_CC_DisableChannel(TIM4, LL_TIM_CHANNEL_CH1);
-
-        // signal end of transmission/latch common register
-        LL_GPIO_SetOutputPin(m_lat_port, m_lat_pin);
-        LL_GPIO_ResetOutputPin(m_lat_port, m_lat_pin);        
-        
+        // tell each daisy-chained driver chip to latch all data from its common register
+        if (latch_option == LatchPinOption::latch_after_send)
+        {
+            LL_GPIO_SetOutputPin(m_lat_port, m_lat_pin);
+            LL_GPIO_ResetOutputPin(m_lat_port, m_lat_pin);        
+        }        
         return true;            
     #else
         // we don't care about SPI for x86-based unit testing
@@ -166,6 +137,17 @@ void Driver::set_ctrl_cmd()
 void Driver::set_padding_bits()
 {
     embed_utils::bit_manip::add_bitset(m_common_bit_register, m_padding, m_padding_offset);
+}
+
+void Driver::set_function_cmd(DisplayFunction dsprpt, TimingFunction tmgrst, RefreshFunction rfresh, PwmFunction espwm, ShortDetectFunction lsdvlt)
+{
+    std::bitset<m_func_cmd_size> function_cmd {};
+    (dsprpt == DisplayFunction::display_repeat_on)          ? function_cmd.set(4, true) : function_cmd.set(4, false);
+    (tmgrst == TimingFunction::timing_reset_on)             ? function_cmd.set(3, true) : function_cmd.set(3, false);
+    (rfresh == RefreshFunction::auto_refresh_on)            ? function_cmd.set(2, true) : function_cmd.set(2, false);
+    (espwm == PwmFunction::enhanced_pwm)                    ? function_cmd.set(1, true) : function_cmd.set(1, false);
+    (lsdvlt == ShortDetectFunction::threshold_90_percent)   ? function_cmd.set(0, true) : function_cmd.set(0, false);
+    embed_utils::bit_manip::add_bitset(m_common_bit_register, function_cmd, m_func_cmd_offset);    
 }
 
 void Driver::set_function_cmd(const bool dsprpt, const bool tmgrst, const bool rfresh, const bool espwm, const bool lsdvlt)
@@ -188,6 +170,7 @@ void Driver::set_global_brightness_cmd(const uint8_t blue, const uint8_t green, 
     embed_utils::bit_manip::add_bitset(m_common_bit_register, blue_cmd, m_bc_data_offset);
     embed_utils::bit_manip::add_bitset(m_common_bit_register, green_cmd, m_bc_data_offset + m_bc_data_size);
     embed_utils::bit_manip::add_bitset(m_common_bit_register, red_cmd, m_bc_data_offset + m_bc_data_size * 2);
+
 }
 
 void Driver::set_max_current_cmd(const uint8_t blue, const uint8_t green, const uint8_t red)
@@ -210,7 +193,7 @@ void Driver::set_dot_correction_cmd_all(uint8_t pwm)
 	}
 }
 
-void Driver::set_greyscale_cmd_rgb(uint16_t blue_pwm, uint16_t green_pwm, uint16_t red_pwm)
+void Driver::set_greyscale_cmd_rgb(uint16_t red_pwm, uint16_t green_pwm, uint16_t blue_pwm)
 {
     const std::bitset<m_gs_data_size> blue_gs_pwm_cmd {blue_pwm}; 
     const std::bitset<m_gs_data_size> green_gs_pwm_cmd {green_pwm}; 
@@ -223,13 +206,38 @@ void Driver::set_greyscale_cmd_rgb(uint16_t blue_pwm, uint16_t green_pwm, uint16
     }    
 }
 
-void Driver::set_greyscale_cmd_all(uint16_t pwm)
+void Driver::set_greyscale_cmd_white(uint16_t pwm)
 {
     const std::bitset<m_gs_data_size> gs_pwm_cmd {pwm}; 
     for (uint16_t gs_idx = 0; gs_idx < 48; gs_idx++)
     {
     	embed_utils::bit_manip::add_bitset(m_common_bit_register, gs_pwm_cmd, m_gs_data_offset + m_gs_data_size * gs_idx);
     }    
+}
+
+void Driver::set_greyscale_cmd_at_position(uint16_t pwm, uint16_t gs_idx)
+{
+    const std::bitset<m_gs_data_size> gs_pwm_cmd {pwm}; 
+    embed_utils::bit_manip::add_bitset(m_common_bit_register, gs_pwm_cmd, m_gs_data_offset + m_gs_data_size * gs_idx);
+     
+}
+
+bool Driver::set_greyscale_cmd_rgb_at_position(uint16_t led_idx, uint16_t red_pwm, uint16_t green_pwm, uint16_t blue_pwm)
+{
+    // return if we overshot our max number of LEDs
+    if (! (led_idx < tlc5955::Driver::m_num_leds_per_chip))
+    {
+        return false;
+    }
+    
+    const std::bitset<m_gs_data_size> blue_gs_pwm_cmd {blue_pwm}; 
+    const std::bitset<m_gs_data_size> green_gs_pwm_cmd {green_pwm}; 
+    const std::bitset<m_gs_data_size> red_gs_pwm_cmd {red_pwm}; 
+
+    embed_utils::bit_manip::add_bitset(m_common_bit_register, blue_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * led_idx * m_num_colour_chan));
+    embed_utils::bit_manip::add_bitset(m_common_bit_register, green_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * led_idx * m_num_colour_chan) + m_gs_data_size);
+    embed_utils::bit_manip::add_bitset(m_common_bit_register, red_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * led_idx * m_num_colour_chan) + (m_gs_data_size * 2));
+    return true;
 }
 
 void Driver::process_register()
@@ -301,6 +309,10 @@ void Driver::spi2_init(void)
         MODIFY_REG(SPI2->CR2, SPI_CR2_FRF, LL_SPI_PROTOCOL_MOTOROLA);
 
         CLEAR_BIT(SPI2->CR2, SPI_CR2_NSSP);
+
+        // start the GSCLK timer output - this remains on
+        LL_TIM_CC_EnableChannel(TIM4, LL_TIM_CHANNEL_CH1);
+        LL_TIM_EnableCounter(TIM4);
 
     #pragma GCC diagnostic pop  // ignored "-Wvolatile"  
     #endif // defined(USE_TLC5955_LL_DRIVER)

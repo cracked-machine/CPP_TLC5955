@@ -50,10 +50,22 @@
 
 namespace tlc5955 {
 
+
+
 enum class dma
 {
     enable,
     disable
+};
+
+enum class DataLatchType {
+    control,
+    greyscale
+};
+
+enum class LatchPinOption {
+    no_latch,
+    latch_after_send
 };
 
 class Driver
@@ -61,22 +73,81 @@ class Driver
 public:
 
     Driver() = default;
+
+    // @brief init the PB7/PB8 pins as SPI peripheral.
     void spi2_init(void);
+
+    // @brief init the PB7/PB8 pins as GPIO outputs.
     void gpio_init(void);
-    // bool enable_spi(dma use_dma);
-    bool send_blocking_transmit();
-    bool pause_dma_transmit(bool pause);
+
+    // @brief Send the buffer to the TLC5955 chip via SPI
+    // @param latch_option latch after send?
+    bool send_spi_bytes(LatchPinOption latch_option);
    
     // @brief Clears (zeroize) the common register
     void reset();
 
-    // @brief Disable SPI and use GPIOs to manually set the latch cmd 
-    // @param latch if true, also send the 8bit command and padding bits
-    void toggle_latch(const bool latch);
+    // @brief Disable SPI and use GPIOs to manually set the first bit
+    void send_first_bit(const DataLatchType latch_type);
 
+    // @brief Set the predefined ctrl cmd
     void set_ctrl_cmd();
 
+    // @brief Set the "don't care" padding bits
     void set_padding_bits();
+
+    // @brief Auto display repeat mode enable bit
+    enum class DisplayFunction {
+        // @brief The auto display repeat function is disabled. Each constant-current output is turned on and off for one display period
+        display_repeat_off,
+        // @brief Each output repeats the PWM control every 65,536 GSCLKs.
+        display_repeat_on
+    };
+
+    // @brief Display timing reset mode enable bit
+    enum class TimingFunction {
+        // @brief The GS counter is not reset and the outputs are not forced off even when a LAT rising edge is input for a GS data write.
+        timing_reset_off,
+        // @brief The GS counter is reset to 0 and all outputs are forced off at the LAT rising edge for a GS data write. 
+        // Afterwards, PWM control resumes from the next GSCLK rising edge.
+        timing_reset_on
+    };
+
+    // @brief Auto data refresh mode enable bit
+    enum class RefreshFunction {
+        // @brief The auto data refresh function is disabled. The data in the common shift register are copied to the GS data latch 
+        // at the next LAT rising edge for a GS data write. DC data in the control data latch are copied to the DC data latch at the same time.
+        auto_refresh_off,
+        // @brief The auto data refresh function is enabled. The data in the common shift register are copied to the GS data latch 
+        // at the 65,536th GSCLK after the LAT rising edge for a GS data write. DC data in the control data latch are copied to the DC data latch at the same time
+        auto_refresh_on
+    };
+
+    // @brief ES-PWM mode enable bit
+    enum class PwmFunction {
+        // @brief Conventional PWM control mode is selected. If the TLC5955 is used for multiplexing a drive, 
+        // the conventional PWM mode should be selected to prevent excess on or off switching.
+        normal_pwm,
+        // @brief Enhanced Spectrum PWM (ES-PWM) control mode is selected
+        enhanced_pwm
+    };
+
+    // @brief LED short detection voltage selection bit. LED short detection (LSD) detects a fault caused by a shorted LED by comparing the
+    // OUTXn voltage to the LSD detection threshold voltage. The threshold voltage is selected by this bit.
+    enum class ShortDetectFunction {
+        // @brief The LSD voltage is VCC × 70%.
+        threshold_70_percent,
+        // @brief The LSD voltage is VCC × 90%.
+        threshold_90_percent
+    };
+
+    // @brief Set the function cmd object. See class enums above.
+    // @param dsprpt Auto display repeat mode enable bit
+    // @param tmgrst Display timing reset mode enable bit
+    // @param rfresh Auto data refresh mode enable bit
+    // @param espwm ES-PWM mode enable bit
+    // @param lsdvlt LED short detection voltage selection bit.
+    void set_function_cmd(DisplayFunction dsprpt, TimingFunction tmgrst, RefreshFunction rfresh, PwmFunction espwm, ShortDetectFunction lsdvlt);
 
     // @brief Set the function cmd object
     // 
@@ -85,49 +156,64 @@ public:
     // @param rfresh If false GS data latch at the next LAT rising edge, if true GS data latch at the 65,536th GSCLK after the LAT rising edge
     // @param espwm If false conventional PWM, if true ES-PWM enabled
     // @param lsdvlt If false the LSD threshold voltage is VCC × 70%. if true the LSD threshold voltage is VCC × 90%.
+    [[deprecated( "Please use set_function_cmd(DisplayFunction dsprpt, TimingFunction tmgrst, RefreshFunction rfresh, PwmFunction espwm, ShortDetectFunction lsdvlt);" )]] 	
     void set_function_cmd(const bool dsprpt, const bool tmgrst, const bool rfresh, const bool espwm, const bool lsdvlt);
 
     // @brief Set the global brightness cmd object
-    // 
     // @param blue 
     // @param green 
     // @param red 
+    /// @todo add error checking
     void set_global_brightness_cmd(const uint8_t blue, const uint8_t green, const uint8_t red);
 
     // @brief Set the max current cmd object
-    // 
     // @param blue 
     // @param green 
     // @param red 
+    /// @todo add error checking
     void set_max_current_cmd(const uint8_t blue, const uint8_t green, const uint8_t red);
 
-    // @brief Set the dot correction cmd all object
-    // 
+    // @brief Set the dot correction bits in the buffer
     // @param pwm 
+    /// @todo add error checking
     void set_dot_correction_cmd_all(uint8_t pwm);
 
-    // @brief Set the greyscale cmd all object
-    // 
+    // @brief Set the greyscale bits in the buffer
     // @param pwm 
-    void set_greyscale_cmd_all(uint16_t pwm);
+    void set_greyscale_cmd_white(uint16_t pwm);
 
+    // @brief Set the greyscale RGB bits in the buffer for all LEDs at same time
+    // @param blue_pwm Must be value: 0-2^16
+    // @param green_pwm Must be value: 0-2^16
+    // @param red_pwm Must be value: 0-2^16
     void set_greyscale_cmd_rgb(uint16_t blue_pwm, uint16_t green_pwm, uint16_t red_pwm);
 
-    // @brief convert the common register bitset to common register byte array.
-    // 
+    [[deprecated( "Please use set_greyscale_cmd_rgb_at_position(uint16_t led_idx, uint16_t red_pwm, uint16_t green_pwm, uint16_t blue_pwm);" )]] 	
+    void set_greyscale_cmd_at_position(uint16_t pwm, uint16_t gs_idx);
+
+    // @brief Set the greyscale RGB bits in the buffer at specific LED position
+    // @param led_idx Must be value: 0-15
+    // @param red_pwm Must be value: 0-2^16
+    // @param green_pwm Must be value: 0-2^16
+    // @param blue_pwm Must be value: 0-2^16
+    bool set_greyscale_cmd_rgb_at_position(uint16_t led_idx, uint16_t red_pwm, uint16_t green_pwm, uint16_t blue_pwm);
+
+    // @brief convert the buffer from bits (std::bitset) to bytes (std::array).
     void process_register();
 
 protected:
 
+    // @brief The number of bytes in the buffer
     static const uint8_t m_common_reg_size_bytes {96};
+    // @brief object holding the buffer in byte format
     std::array<uint8_t, m_common_reg_size_bytes> m_common_byte_register{0};
 
+    // @brief The number of bits in the buffer
     static const uint16_t m_common_reg_size_bits {768};
+    // @brief object holding the buffer in bit format
     std::bitset<m_common_reg_size_bits> m_common_bit_register {0};
 
 private:
-    // @brief The bitset utility
-    // embed_utils::bitset_utils bitsetter;
 
      // @brief The number of daisy chained driver chips in the circuit.
     uint8_t m_num_driver_ics {1}; 
@@ -194,6 +280,7 @@ private:
         // @brief The HAL SPI interface
         SPI_HandleTypeDef m_spi_interface {hspi2};
     #elif defined(USE_TLC5955_LL_DRIVER)
+        // @brief The CMSIS SPI registers 
         SPI_TypeDef *m_spi_port {SPI2};
     #endif
     #if defined(USE_TLC5955_HAL_DRIVER) || defined(USE_TLC5955_LL_DRIVER)
