@@ -150,17 +150,6 @@ void Driver::set_function_cmd(DisplayFunction dsprpt, TimingFunction tmgrst, Ref
     embed_utils::bit_manip::add_bitset(m_common_bit_register, function_cmd, m_func_cmd_offset);    
 }
 
-void Driver::set_function_cmd(const bool dsprpt, const bool tmgrst, const bool rfresh, const bool espwm, const bool lsdvlt)
-{
-    std::bitset<m_func_cmd_size> function_cmd {};
-    function_cmd.set(4, dsprpt);
-    function_cmd.set(3, tmgrst);
-    function_cmd.set(2, rfresh);
-    function_cmd.set(1, espwm);
-    function_cmd.set(0, lsdvlt);
-    embed_utils::bit_manip::add_bitset(m_common_bit_register, function_cmd, m_func_cmd_offset);
-}
-
 void Driver::set_global_brightness_cmd(const uint8_t blue, const uint8_t green, const uint8_t red)
 {
     const std::bitset<m_bc_data_size> blue_cmd {blue};
@@ -213,13 +202,6 @@ void Driver::set_greyscale_cmd_white(uint16_t pwm)
     {
     	embed_utils::bit_manip::add_bitset(m_common_bit_register, gs_pwm_cmd, m_gs_data_offset + m_gs_data_size * gs_idx);
     }    
-}
-
-void Driver::set_greyscale_cmd_at_position(uint16_t pwm, uint16_t gs_idx)
-{
-    const std::bitset<m_gs_data_size> gs_pwm_cmd {pwm}; 
-    embed_utils::bit_manip::add_bitset(m_common_bit_register, gs_pwm_cmd, m_gs_data_offset + m_gs_data_size * gs_idx);
-     
 }
 
 bool Driver::set_greyscale_cmd_rgb_at_position(uint16_t led_idx, uint16_t red_pwm, uint16_t green_pwm, uint16_t blue_pwm)

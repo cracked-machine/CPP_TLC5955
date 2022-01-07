@@ -149,16 +149,7 @@ public:
     // @param lsdvlt LED short detection voltage selection bit.
     void set_function_cmd(DisplayFunction dsprpt, TimingFunction tmgrst, RefreshFunction rfresh, PwmFunction espwm, ShortDetectFunction lsdvlt);
 
-    // @brief Set the function cmd object
-    // 
-    // @param dsprpt If false entire display period only executes one time after a LAT, if true entire display period repeats
-    // @param tmgrst If false outputs are not forced off, if true outputs are forced off at latch
-    // @param rfresh If false GS data latch at the next LAT rising edge, if true GS data latch at the 65,536th GSCLK after the LAT rising edge
-    // @param espwm If false conventional PWM, if true ES-PWM enabled
-    // @param lsdvlt If false the LSD threshold voltage is VCC × 70%. if true the LSD threshold voltage is VCC × 90%.
-    [[deprecated( "Please use set_function_cmd(DisplayFunction dsprpt, TimingFunction tmgrst, RefreshFunction rfresh, PwmFunction espwm, ShortDetectFunction lsdvlt);" )]] 	
-    void set_function_cmd(const bool dsprpt, const bool tmgrst, const bool rfresh, const bool espwm, const bool lsdvlt);
-
+  
     // @brief Set the global brightness cmd object
     // @param blue 
     // @param green 
@@ -187,9 +178,6 @@ public:
     // @param green_pwm Must be value: 0-2^16
     // @param red_pwm Must be value: 0-2^16
     void set_greyscale_cmd_rgb(uint16_t blue_pwm, uint16_t green_pwm, uint16_t red_pwm);
-
-    [[deprecated( "Please use set_greyscale_cmd_rgb_at_position(uint16_t led_idx, uint16_t red_pwm, uint16_t green_pwm, uint16_t blue_pwm);" )]] 	
-    void set_greyscale_cmd_at_position(uint16_t pwm, uint16_t gs_idx);
 
     // @brief Set the greyscale RGB bits in the buffer at specific LED position
     // @param led_idx Must be value: 0-15
