@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include <bitset>
 #include <array>
+#include <memory>
 
 #if defined(USE_SSD1306_HAL_DRIVER) || defined(USE_SSD1306_LL_DRIVER)
 
@@ -72,7 +73,7 @@ class Driver
 {
 public:
 
-    Driver() = default;
+    Driver();
 
     // @brief init the PB7/PB8 pins as SPI peripheral.
     void spi2_init(void);
@@ -203,6 +204,9 @@ protected:
 
 private:
 
+    // @brief The CMSIS mem-mapped SPI device
+    std::unique_ptr<SPI_TypeDef> _spi_handle;
+
      // @brief The number of daisy chained driver chips in the circuit.
     uint8_t m_num_driver_ics {1}; 
 
@@ -263,14 +267,6 @@ private:
     // @brief The control command. Always 0x96 (0b10010110)
     std::bitset<m_ctrl_cmd_size> m_ctrl_cmd {0x96};
 
-    // void enable_gpio_output_only();
-    #ifdef USE_TLC5955_HAL_DRIVER 
-        // @brief The HAL SPI interface
-        SPI_HandleTypeDef m_spi_interface {hspi2};
-    #elif defined(USE_TLC5955_LL_DRIVER)
-        // @brief The CMSIS SPI registers 
-        SPI_TypeDef *m_spi_port {SPI2};
-    #endif
     #if defined(USE_TLC5955_HAL_DRIVER) || defined(USE_TLC5955_LL_DRIVER)
 
         // @brief Latch terminal GPIO port

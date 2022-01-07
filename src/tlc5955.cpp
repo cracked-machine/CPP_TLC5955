@@ -16,6 +16,11 @@
 namespace tlc5955 
 {
 
+Driver::Driver()
+{
+    // initialise the SPI handle used in this class
+    _spi_handle = std::unique_ptr<SPI_TypeDef>(SPI2);
+}
 
 // @brief class to implement TLC5955 LED Driver IC
 // Refer to datasheet - https://www.ti.com/lit/ds/symlink/tlc5955.pdf
@@ -27,11 +32,10 @@ void Driver::reset()
 
 void Driver::send_first_bit(DataLatchType latch_type [[maybe_unused]])
 {
-    //std::bitset<m_select_cmd_size> latch_cmd {latch};
-    //embed_utils::bit_manip::add_bitset(m_common_bit_register, latch_cmd, m_select_cmd_offset);
+
     #if defined(USE_FULL_LL_DRIVER)
 
-        LL_SPI_Disable(SPI2);
+        LL_SPI_Disable(_spi_handle.get());
 
         // set PB7/PB8 as GPIO outputs
         gpio_init();
@@ -75,7 +79,7 @@ void Driver::send_first_bit(DataLatchType latch_type [[maybe_unused]])
 
         // set PB7/PB8 to SPI
         spi2_init();
-        LL_SPI_Enable(m_spi_port);
+        LL_SPI_Enable(_spi_handle.get());
         
     #endif  // USE_FULL_LL_DRIVER
 }
@@ -89,26 +93,26 @@ bool Driver::send_spi_bytes(LatchPinOption latch_option)
         }
         else
         {
-            return HAL_SPI_Transmit(&m_spi_port, m_common_byte_register.data(), m_common_byte_register.size(), 0);
+            return HAL_SPI_Transmit(&_spi_handle.get(), m_common_byte_register.data(), m_common_byte_register.size(), 0);
         }
     #elif defined(USE_TLC5955_LL_DRIVER)
         // we don't want to be here if DMA is enabled
-        if (LL_SPI_IsEnabledDMAReq_TX(m_spi_port)) { return false; }
+        if (LL_SPI_IsEnabledDMAReq_TX(_spi_handle.get())) { return false; }
             
         // send the bytes
         for (auto &byte: m_common_byte_register)
         {
             // send the byte of data
-            LL_SPI_TransmitData8(m_spi_port, byte);
+            LL_SPI_TransmitData8(_spi_handle.get(), byte);
 
             // check the data has left the SPI FIFO before sending the next
-            if (!embed_utils::spi::ll_wait_for_txe_flag(m_spi_port, 1))
+            if (!stm32::spi::ll_wait_for_txe_flag(_spi_handle, 1))
             {
                 #if defined(USE_RTT) 
                     SEGGER_RTT_printf(0, "tlc5955::Driver::send_blocking_transmit(): Tx buffer is full"); 
                 #endif
             }
-            if (!embed_utils::spi::ll_wait_for_bsy_flag(m_spi_port, 1))
+            if (!stm32::spi::ll_wait_for_bsy_flag(_spi_handle, 1))
             {
                 #if defined(USE_RTT) 
                     SEGGER_RTT_printf(0, "tlc5955::Driver::send_blocking_transmit(); SPI bus is busy"); 
@@ -284,13 +288,13 @@ void Driver::spi2_init(void)
         SET_BIT(SYSCFG->CFGR1, LL_SYSCFG_I2C_FASTMODEPLUS_PB7);
         SET_BIT(SYSCFG->CFGR1, LL_SYSCFG_I2C_FASTMODEPLUS_PB8);
 
-        SPI2->CR1 = 0;
-        SPI2->CR1 |=    (LL_SPI_HALF_DUPLEX_TX | LL_SPI_MODE_MASTER | LL_SPI_POLARITY_LOW | LL_SPI_PHASE_1EDGE | 
+        _spi_handle.get()->CR1 = 0;
+        _spi_handle.get()->CR1 |=    (LL_SPI_HALF_DUPLEX_TX | LL_SPI_MODE_MASTER | LL_SPI_POLARITY_LOW | LL_SPI_PHASE_1EDGE | 
                         LL_SPI_NSS_SOFT | LL_SPI_BAUDRATEPRESCALER_DIV8 | LL_SPI_MSB_FIRST | LL_SPI_CRCCALCULATION_DISABLE);
 
-        MODIFY_REG(SPI2->CR2, SPI_CR2_FRF, LL_SPI_PROTOCOL_MOTOROLA);
+        MODIFY_REG(_spi_handle.get()->CR2, SPI_CR2_FRF, LL_SPI_PROTOCOL_MOTOROLA);
 
-        CLEAR_BIT(SPI2->CR2, SPI_CR2_NSSP);
+        CLEAR_BIT(_spi_handle.get()->CR2, SPI_CR2_NSSP);
 
         // start the GSCLK timer output - this remains on
         LL_TIM_CC_EnableChannel(TIM4, LL_TIM_CHANNEL_CH1);
