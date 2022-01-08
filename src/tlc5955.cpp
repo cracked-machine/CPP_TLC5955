@@ -228,9 +228,9 @@ bool Driver::set_greyscale_cmd_rgb_at_position(uint16_t led_idx, uint16_t red_pw
 
 void Driver::process_register()
 {
-    noarch::bit_manip::print_bits(m_common_bit_register);
+    // noarch::bit_manip::print_bits(m_common_bit_register);
     noarch::bit_manip::bitset_to_bytearray(m_common_byte_register, m_common_bit_register);
-    noarch::byte_manip::print_bytes(m_common_byte_register);
+    // noarch::byte_manip::print_bytes(m_common_byte_register);
 }
 
 void Driver::gpio_init(void)
