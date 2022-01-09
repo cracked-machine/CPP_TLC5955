@@ -72,8 +72,8 @@ enum class LatchPinOption {
 class Driver
 {
 public:
-
-    Driver();
+    Driver() = default;
+    Driver(SPI_TypeDef * spi_handle);
 
     // @brief init the PB7/PB8 pins as SPI peripheral.
     void spi2_init(void);

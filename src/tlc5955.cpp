@@ -16,10 +16,10 @@
 namespace tlc5955 
 {
 
-Driver::Driver()
+Driver::Driver(SPI_TypeDef * spi_handle)
 {
     // initialise the SPI handle used in this class
-    _spi_handle = std::unique_ptr<SPI_TypeDef>(SPI2);
+    _spi_handle = std::unique_ptr<SPI_TypeDef>(spi_handle);
 }
 
 // @brief class to implement TLC5955 LED Driver IC
