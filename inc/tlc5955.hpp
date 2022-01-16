@@ -81,8 +81,8 @@ public:
     // @brief init the PB7/PB8 pins as GPIO outputs.
     void gpio_init(void);
 
-    // @brief Send the buffer to the TLC5955 chip via SPI
-    // @param latch_option latch after send?
+    // @brief Send the buffer once to the TLC5955 chip via SPI and options with/without latch
+    // @param latch_option latch after send or no latch after send
     bool send_spi_bytes(LatchPinOption latch_option);
    
     // @brief Clears (zeroize) the common register

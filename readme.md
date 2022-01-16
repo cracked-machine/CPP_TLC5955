@@ -2,7 +2,7 @@
 
 TLC5955 datasheet can be found [here](https://www.ti.com/product/TLC5955)
 
-See [LedManager](https://github.com/cracked-machine/StepSequencer_SW/blob/main/main_app/src/LedManager.cpp) for example of how to use this driver.
+See [LedManager](https://github.com/cracked-machine/StepSequencer_SW/blob/main/main_app/src/led_manager.cpp) for example of how to use this driver.
 
 ## Design
 
