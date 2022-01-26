@@ -135,12 +135,12 @@ bool Driver::send_spi_bytes(LatchPinOption latch_option)
 
 void Driver::set_ctrl_cmd()
 {
-    noarch::bit_manip::add_bitset(m_common_bit_register, m_ctrl_cmd, m_ctrl_cmd_offset);    
+    noarch::bit_manip::insert_bitset_at_offset(m_common_bit_register, m_ctrl_cmd, m_ctrl_cmd_offset);    
 }
 
 void Driver::set_padding_bits()
 {
-    noarch::bit_manip::add_bitset(m_common_bit_register, m_padding, m_padding_offset);
+    noarch::bit_manip::insert_bitset_at_offset(m_common_bit_register, m_padding, m_padding_offset);
 }
 
 void Driver::set_function_cmd(DisplayFunction dsprpt, TimingFunction tmgrst, RefreshFunction rfresh, PwmFunction espwm, ShortDetectFunction lsdvlt)
@@ -151,7 +151,7 @@ void Driver::set_function_cmd(DisplayFunction dsprpt, TimingFunction tmgrst, Ref
     (rfresh == RefreshFunction::auto_refresh_on)            ? function_cmd.set(2, true) : function_cmd.set(2, false);
     (espwm == PwmFunction::enhanced_pwm)                    ? function_cmd.set(1, true) : function_cmd.set(1, false);
     (lsdvlt == ShortDetectFunction::threshold_90_percent)   ? function_cmd.set(0, true) : function_cmd.set(0, false);
-    noarch::bit_manip::add_bitset(m_common_bit_register, function_cmd, m_func_cmd_offset);    
+    noarch::bit_manip::insert_bitset_at_offset(m_common_bit_register, function_cmd, m_func_cmd_offset);    
 }
 
 void Driver::set_global_brightness_cmd(const uint8_t blue, const uint8_t green, const uint8_t red)
@@ -160,9 +160,9 @@ void Driver::set_global_brightness_cmd(const uint8_t blue, const uint8_t green, 
     const std::bitset<m_bc_data_size> green_cmd {green};
     const std::bitset<m_bc_data_size> red_cmd {red};
     
-    noarch::bit_manip::add_bitset(m_common_bit_register, blue_cmd, m_bc_data_offset);
-    noarch::bit_manip::add_bitset(m_common_bit_register, green_cmd, m_bc_data_offset + m_bc_data_size);
-    noarch::bit_manip::add_bitset(m_common_bit_register, red_cmd, m_bc_data_offset + m_bc_data_size * 2);
+    noarch::bit_manip::insert_bitset_at_offset(m_common_bit_register, blue_cmd, m_bc_data_offset);
+    noarch::bit_manip::insert_bitset_at_offset(m_common_bit_register, green_cmd, m_bc_data_offset + m_bc_data_size);
+    noarch::bit_manip::insert_bitset_at_offset(m_common_bit_register, red_cmd, m_bc_data_offset + m_bc_data_size * 2);
 
 }
 
@@ -172,9 +172,9 @@ void Driver::set_max_current_cmd(const uint8_t blue, const uint8_t green, const 
     const std::bitset<m_mc_data_size> green_cmd {green};
     const std::bitset<m_mc_data_size> red_cmd {red};
 
-    noarch::bit_manip::add_bitset(m_common_bit_register, blue_cmd, m_mc_data_offset);
-    noarch::bit_manip::add_bitset(m_common_bit_register, green_cmd, m_mc_data_offset + m_mc_data_size);
-    noarch::bit_manip::add_bitset(m_common_bit_register, red_cmd, m_mc_data_offset + m_mc_data_size * 2);
+    noarch::bit_manip::insert_bitset_at_offset(m_common_bit_register, blue_cmd, m_mc_data_offset);
+    noarch::bit_manip::insert_bitset_at_offset(m_common_bit_register, green_cmd, m_mc_data_offset + m_mc_data_size);
+    noarch::bit_manip::insert_bitset_at_offset(m_common_bit_register, red_cmd, m_mc_data_offset + m_mc_data_size * 2);
 }
 
 void Driver::set_dot_correction_cmd_all(uint8_t pwm)
@@ -182,7 +182,7 @@ void Driver::set_dot_correction_cmd_all(uint8_t pwm)
     const std::bitset<m_dc_data_size> dc_pwm_cmd {pwm};
     for (uint8_t dc_idx = 0; dc_idx < 48; dc_idx++)
 	{
-		noarch::bit_manip::add_bitset(m_common_bit_register, dc_pwm_cmd, m_dc_data_offset + m_dc_data_size * dc_idx);		
+		noarch::bit_manip::insert_bitset_at_offset(m_common_bit_register, dc_pwm_cmd, m_dc_data_offset + m_dc_data_size * dc_idx);		
 	}
 }
 
@@ -193,9 +193,9 @@ void Driver::set_greyscale_cmd_rgb(uint16_t red_pwm, uint16_t green_pwm, uint16_
     const std::bitset<m_gs_data_size> red_gs_pwm_cmd {red_pwm}; 
     for (uint16_t gs_idx = 0; gs_idx < m_num_leds_per_chip; gs_idx++)
     {
-    	noarch::bit_manip::add_bitset(m_common_bit_register, blue_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * gs_idx * m_num_colour_chan));
-        noarch::bit_manip::add_bitset(m_common_bit_register, green_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * gs_idx * m_num_colour_chan) + m_gs_data_size);
-        noarch::bit_manip::add_bitset(m_common_bit_register, red_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * gs_idx * m_num_colour_chan) + (m_gs_data_size * 2));
+    	noarch::bit_manip::insert_bitset_at_offset(m_common_bit_register, blue_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * gs_idx * m_num_colour_chan));
+        noarch::bit_manip::insert_bitset_at_offset(m_common_bit_register, green_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * gs_idx * m_num_colour_chan) + m_gs_data_size);
+        noarch::bit_manip::insert_bitset_at_offset(m_common_bit_register, red_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * gs_idx * m_num_colour_chan) + (m_gs_data_size * 2));
     }    
 }
 
@@ -204,7 +204,7 @@ void Driver::set_greyscale_cmd_white(uint16_t pwm)
     const std::bitset<m_gs_data_size> gs_pwm_cmd {pwm}; 
     for (uint16_t gs_idx = 0; gs_idx < 48; gs_idx++)
     {
-    	noarch::bit_manip::add_bitset(m_common_bit_register, gs_pwm_cmd, m_gs_data_offset + m_gs_data_size * gs_idx);
+    	noarch::bit_manip::insert_bitset_at_offset(m_common_bit_register, gs_pwm_cmd, m_gs_data_offset + m_gs_data_size * gs_idx);
     }    
 }
 
@@ -220,9 +220,9 @@ bool Driver::set_greyscale_cmd_rgb_at_position(uint16_t led_idx, uint16_t red_pw
     const std::bitset<m_gs_data_size> green_gs_pwm_cmd {green_pwm}; 
     const std::bitset<m_gs_data_size> red_gs_pwm_cmd {red_pwm}; 
 
-    noarch::bit_manip::add_bitset(m_common_bit_register, blue_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * led_idx * m_num_colour_chan));
-    noarch::bit_manip::add_bitset(m_common_bit_register, green_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * led_idx * m_num_colour_chan) + m_gs_data_size);
-    noarch::bit_manip::add_bitset(m_common_bit_register, red_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * led_idx * m_num_colour_chan) + (m_gs_data_size * 2));
+    noarch::bit_manip::insert_bitset_at_offset(m_common_bit_register, blue_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * led_idx * m_num_colour_chan));
+    noarch::bit_manip::insert_bitset_at_offset(m_common_bit_register, green_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * led_idx * m_num_colour_chan) + m_gs_data_size);
+    noarch::bit_manip::insert_bitset_at_offset(m_common_bit_register, red_gs_pwm_cmd, m_gs_data_offset   + (m_gs_data_size * led_idx * m_num_colour_chan) + (m_gs_data_size * 2));
     return true;
 }
 
