@@ -47,7 +47,7 @@
 #include <byte_utils.hpp>
 
 // disable dynamic allocation/copying
-#include <ControlledBase.hpp>    
+#include <allocation_restricted_base.hpp>    
 
 namespace tlc5955 {
 
@@ -69,7 +69,7 @@ enum class LatchPinOption {
     latch_after_send
 };
 
-class Driver : public ControlledBase
+class Driver : public AllocationRestrictedBase
 {
 public:
     Driver() = default;
