@@ -51,48 +51,22 @@
 
 namespace tlc5955 {
 
-enum class dma
-{
-    enable,
-    disable
-};
-
-enum class DataLatchType {
-    control,
-    greyscale
-};
-
-enum class LatchPinOption {
-    no_latch,
-    latch_after_send
-};
-
 class Driver : public AllocationRestrictedBase
 {
 public:
     Driver(SPI_TypeDef * spi_handle);
 
-    // @brief init the PB7/PB8 pins as SPI peripheral.
-    void spi2_init(void);
+    // @brief The type of first bit to send
+    enum class DataLatchType {
+        control,
+        data
+    };
 
-    // @brief init the PB7/PB8 pins as GPIO outputs.
-    void gpio_init(void);
-
-    // @brief Send the buffer once to the TLC5955 chip via SPI and options with/without latch
-    // @param latch_option latch after send or no latch after send
-    bool send_spi_bytes(LatchPinOption latch_option);
-   
-    // @brief Clears (zeroize) the common register
-    void reset();
-
-    // @brief Disable SPI and use GPIOs to manually set the first bit
-    void send_first_bit(const DataLatchType latch_type);
-
-    // @brief Set the predefined ctrl cmd
-    void set_ctrl_cmd();
-
-    // @brief Set the "don't care" padding bits
-    void set_padding_bits();
+    // @brief latch immediately or defer
+    enum class LatchPinOption {
+        no_latch,
+        latch_after_send
+    };    
 
     // @brief Auto display repeat mode enable bit
     enum class DisplayFunction {
@@ -139,6 +113,20 @@ public:
         threshold_90_percent
     };
 
+    // @brief Clears (zeroize) the common register
+    void reset();
+
+    // @brief Manually set the first bit (control or data)
+    // Disables SPI pins and uses them as GPIO to manually send the first bit
+    // @param latch_type control message or data message
+    void send_first_bit(const DataLatchType latch_type);
+
+    // @brief Set the "don't care" padding bits
+    void set_padding_bits();
+
+    // @brief Set the predefined ctrl cmd
+    void set_ctrl_cmd();
+
     // @brief Set the function cmd object. See class enums above.
     // @param dsprpt Auto display repeat mode enable bit
     // @param tmgrst Display timing reset mode enable bit
@@ -147,7 +135,6 @@ public:
     // @param lsdvlt LED short detection voltage selection bit.
     void set_function_cmd(DisplayFunction dsprpt, TimingFunction tmgrst, RefreshFunction rfresh, PwmFunction espwm, ShortDetectFunction lsdvlt);
 
-  
     // @brief Set the global brightness cmd object
     // @param blue 
     // @param green 
@@ -184,6 +171,10 @@ public:
     // @param blue_pwm Must be value: 0-2^16
     bool set_greyscale_cmd_rgb_at_position(uint16_t led_idx, uint16_t red_pwm, uint16_t green_pwm, uint16_t blue_pwm);
 
+    // @brief Send the buffer once to the TLC5955 chip via SPI and options with/without latch
+    // @param latch_option latch after send or no latch after send
+    bool send_spi_bytes(LatchPinOption latch_option);
+
     // @brief convert the buffer from bits (std::bitset) to bytes (std::array).
     void process_register();
 
@@ -202,10 +193,7 @@ protected:
 private:
 
     // @brief The CMSIS mem-mapped SPI device
-    std::unique_ptr<SPI_TypeDef> _spi_handle;
-
-     // @brief The number of daisy chained driver chips in the circuit.
-    uint8_t m_num_driver_ics {1}; 
+    std::unique_ptr<SPI_TypeDef> m_spi_handle;
 
     // @brief The number of colour channels per LED
     static const uint8_t m_num_colour_chan {3};
@@ -239,24 +227,24 @@ private:
     static constexpr uint16_t   m_dc_latch_size {m_dc_data_size * m_num_leds_per_chip * m_num_colour_chan};    
     // @brief total bits for the padding
     static constexpr uint16_t   m_padding_size  {
-        m_common_reg_size_bits - (m_ctrl_cmd_size + m_func_cmd_size + m_bc_latch_size + m_mc_latch_size + m_dc_latch_size) };
+        m_common_reg_size_bits - (m_ctrl_cmd_size + m_func_cmd_size + m_bc_latch_size + m_mc_latch_size + m_dc_latch_size)};
 
     // @brief select command latch offset
     static constexpr uint8_t    m_select_cmd_offset {0};
     // @brief control command latch offset
-    static constexpr uint8_t    m_ctrl_cmd_offset   { static_cast<uint8_t>  (m_select_cmd_offset  /*+ m_select_cmd_size*/)  };  
+    static constexpr uint8_t    m_ctrl_cmd_offset   {static_cast<uint8_t>  (m_select_cmd_offset)};  
     // @brief padding offset
-    static constexpr uint8_t    m_padding_offset    { static_cast<uint8_t>  (m_ctrl_cmd_offset      + m_ctrl_cmd_size)      }; 
+    static constexpr uint8_t    m_padding_offset    {static_cast<uint8_t>  (m_ctrl_cmd_offset + m_ctrl_cmd_size)}; 
     // @brief function command latch offset
-    static constexpr uint16_t   m_func_cmd_offset   { static_cast<uint16_t> (m_padding_offset       + m_padding_size)       };  
+    static constexpr uint16_t   m_func_cmd_offset   {static_cast<uint16_t> (m_padding_offset + m_padding_size)};  
     // @brief brightness control data latch offset
-    static constexpr uint16_t   m_bc_data_offset    { static_cast<uint16_t> (m_func_cmd_offset      + m_func_cmd_size)      };  
+    static constexpr uint16_t   m_bc_data_offset    {static_cast<uint16_t> (m_func_cmd_offset + m_func_cmd_size)};  
     // @brief max current data latch offset
-    static constexpr uint16_t   m_mc_data_offset    { static_cast<uint16_t> (m_bc_data_offset       + m_bc_latch_size)      };  
+    static constexpr uint16_t   m_mc_data_offset    {static_cast<uint16_t> (m_bc_data_offset + m_bc_latch_size)};  
     // @brief dot correctness data latch offset
-    static constexpr uint16_t   m_dc_data_offset    { static_cast<uint16_t> (m_mc_data_offset       + m_mc_latch_size)      }; 
+    static constexpr uint16_t   m_dc_data_offset    {static_cast<uint16_t> (m_mc_data_offset + m_mc_latch_size)}; 
     // @brief greyscale data latch offset
-    static constexpr uint8_t    m_gs_data_offset    { static_cast<uint8_t>  (m_ctrl_cmd_offset)};                             
+    static constexpr uint8_t    m_gs_data_offset    {static_cast<uint8_t>  (m_ctrl_cmd_offset)};                             
 
     // @brief Don't Care bits. We set last bit to 1 for diagnostics purposes
     std::bitset<m_padding_size> m_padding {0x01};
@@ -264,7 +252,7 @@ private:
     // @brief The control command. Always 0x96 (0b10010110)
     std::bitset<m_ctrl_cmd_size> m_ctrl_cmd {0x96};
 
-    #if defined(USE_TLC5955_HAL_DRIVER) || defined(USE_TLC5955_LL_DRIVER)
+    #if not defined(X86_UNIT_TESTING_ONLY)
 
         // @brief Latch terminal GPIO port
         GPIO_TypeDef* m_lat_port {TLC5955_SPI2_LAT_GPIO_Port};
@@ -288,6 +276,12 @@ private:
 
     #endif	
 
+
+    // @brief init the PB7/PB8 pins as SPI peripheral.
+    void spi2_init(void);
+
+    // @brief init the PB7/PB8 pins as GPIO outputs.
+    void gpio_init(void);
 };
 
 
