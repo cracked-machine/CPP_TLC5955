@@ -51,8 +51,6 @@
 
 namespace tlc5955 {
 
-
-
 enum class dma
 {
     enable,
@@ -72,7 +70,6 @@ enum class LatchPinOption {
 class Driver : public AllocationRestrictedBase
 {
 public:
-    Driver() = default;
     Driver(SPI_TypeDef * spi_handle);
 
     // @brief init the PB7/PB8 pins as SPI peripheral.
