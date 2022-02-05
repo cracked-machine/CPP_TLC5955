@@ -184,13 +184,13 @@ bool Driver::send_spi_bytes(LatchPinOption latch_option)
         LL_SPI_TransmitData8(m_spi_handle.get(), byte);
 
         // check the data has left the SPI FIFO before sending the next
-        if (!stm32::spi::ll_wait_for_txe_flag(m_spi_handle, 1))
+        if (!stm32::spi::ll_wait_for_txe_flag(m_spi_handle.get(), 1))
         {
             #if defined(USE_RTT) 
                 SEGGER_RTT_printf(0, "tlc5955::Driver::send_blocking_transmit(): Tx buffer is full"); 
             #endif
         }
-        if (!stm32::spi::ll_wait_for_bsy_flag(m_spi_handle, 1))
+        if (!stm32::spi::ll_wait_for_bsy_flag(m_spi_handle.get(), 1))
         {
             #if defined(USE_RTT) 
                 SEGGER_RTT_printf(0, "tlc5955::Driver::send_blocking_transmit(); SPI bus is busy"); 
