@@ -24,35 +24,14 @@
 #ifndef __TLC5955_HPP__
 #define __TLC5955_HPP__
 
-#include <stdint.h>
-#include <bitset>
-#include <array>
-#include <memory>
-
-#if defined(X86_UNIT_TESTING_ONLY)
-	// only used when unit testing on x86
-	#include <iostream>
-#else
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wvolatile"
-		#include "main.h"
-		#include "spi.h"
-	#pragma GCC diagnostic pop
-#endif
-
-
-#include <bitset_utils.hpp>
-#include <byte_utils.hpp>
-
-// disable dynamic allocation/copying
-#include <allocation_restricted_base.hpp>    
+#include <tlc5955_device.hpp>
 
 namespace tlc5955 {
 
 class Driver : public AllocationRestrictedBase
 {
 public:
-    Driver(SPI_TypeDef * spi_handle);
+    Driver(DriverSerialInterface &spi_handle);
 
     // @brief The type of first bit to send
     enum class DataLatchType {
@@ -190,8 +169,10 @@ protected:
 
 private:
 
-    // @brief The CMSIS mem-mapped SPI device
-    std::unique_ptr<SPI_TypeDef> m_spi_handle;
+	#if not defined(X86_UNIT_TESTING_ONLY)
+		// object containing SPI port/pins and pointer to CMSIS defined SPI peripheral
+		DriverSerialInterface m_serial_interface;
+	#endif
 
     // @brief The number of colour channels per LED
     static const uint8_t m_num_colour_chan {3};
@@ -249,31 +230,6 @@ private:
 
     // @brief The control command. Always 0x96 (0b10010110)
     std::bitset<m_ctrl_cmd_size> m_ctrl_cmd {0x96};
-
-    #if not defined(X86_UNIT_TESTING_ONLY)
-
-        // @brief Latch terminal GPIO port
-        GPIO_TypeDef* m_lat_port {TLC5955_SPI2_LAT_GPIO_Port};
-        // @brief Latch GPIO pin
-        uint16_t m_lat_pin {TLC5955_SPI2_LAT_Pin};
-
-        // // @brief GreyScale clock GPIO port
-        // GPIO_TypeDef* m_gsclk_port {TLC5955_SPI2_GSCLK_GPIO_Port};
-        // // @brief GreyScale clock GPIO pin
-        // uint16_t m_gsclk_pin {TLC5955_SPI2_GSCLK_Pin};
-
-        // @brief SPI MOSI GPIO port
-        GPIO_TypeDef* m_mosi_port {TLC5955_SPI2_MOSI_GPIO_Port};
-        // @brief SPI MOSI GPIO pin
-        uint16_t m_mosi_pin {TLC5955_SPI2_MOSI_Pin};
-
-        // @brief SPI Clock GPIO port
-        GPIO_TypeDef* m_sck_port {TLC5955_SPI2_SCK_GPIO_Port};        
-        // @brief SPI Clock GPIO pin
-        uint16_t m_sck_pin {TLC5955_SPI2_SCK_Pin};
-
-    #endif	
-
 
     // @brief init the PB7/PB8 pins as SPI peripheral.
     void spi2_init(void);
