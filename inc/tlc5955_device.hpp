@@ -58,11 +58,11 @@ namespace tlc5955
 class DriverSerialInterface 
 {
 public:
+    // @brief Construct a new Driver Serial Interface object
     // @param led_spi           The SPI peripheral e.g. SPI2
     // @param lat_port          The TLC5955 Latch port e.g. GPIOB
     // @param lat_pin           The TLC5955 Latch pin e.g. LL_GPIO_PIN_9
     // @param mosi_port         The TLC5955 MOSI port e.g. GPIOB
-    // @brief Construct a new Driver Serial Interface object
     // @param mosi_pin          The TLC5955 MOSI pin e.g. LL_GPIO_PIN_7
     // @param sck_port          The TLC5955 serial clock port e.g. GPIOB
     // @param sck_pin           The TLC5955 serial clock pin e.g. LL_GPIO_PIN_8

@@ -31,7 +31,9 @@ namespace tlc5955 {
 class Driver : public AllocationRestrictedBase
 {
 public:
-    Driver(DriverSerialInterface &spi_handle);
+    // @brief Construct a new Driver object
+    // @param serial_interface tlc5955::DriverSerialInterface object containing the SPI device pointer and related pins/ports/settings
+    Driver(DriverSerialInterface &serial_interface);
 
     // @brief The type of first bit to send
     enum class DataLatchType {
