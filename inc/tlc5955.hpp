@@ -29,17 +29,15 @@
 #include <array>
 #include <memory>
 
-#if defined(USE_SSD1306_HAL_DRIVER) || defined(USE_SSD1306_LL_DRIVER)
-
+#if defined(X86_UNIT_TESTING_ONLY)
+	// only used when unit testing on x86
+	#include <iostream>
+#else
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wvolatile"
 		#include "main.h"
-		#include "spi.h"	
+		#include "spi.h"
 	#pragma GCC diagnostic pop
-
-#else
-	// only used when unit testing on x86
-	#include <iostream>
 #endif
 
 

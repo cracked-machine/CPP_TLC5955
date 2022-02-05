@@ -6,13 +6,14 @@
 #include <cstring>
 #include <cassert>
 
-#if defined(USE_RTT)
-    #include <SEGGER_RTT.h>
-#endif
-
-#if defined(USE_FULL_LL_DRIVER)
+#if defined(X86_UNIT_TESTING_ONLY)
+    #if defined(USE_RTT)
+        #include <SEGGER_RTT.h>
+    #endif
+#else
     #include <ll_spi_utils.hpp>
 #endif
+
 namespace tlc5955 
 {
 
