@@ -171,10 +171,9 @@ protected:
 
 private:
 
-	#if not defined(X86_UNIT_TESTING_ONLY)
-		// object containing SPI port/pins and pointer to CMSIS defined SPI peripheral
-		DriverSerialInterface m_serial_interface;
-	#endif
+
+	// object containing SPI port/pins and pointer to CMSIS defined SPI peripheral
+	DriverSerialInterface m_serial_interface;
 
     // @brief The number of colour channels per LED
     static const uint8_t m_num_colour_chan {3};

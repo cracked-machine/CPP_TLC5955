@@ -44,6 +44,7 @@ void Driver::reset()
 
 void Driver::send_first_bit(DataLatchType latch_type [[maybe_unused]])
 {
+#if not defined(X86_UNIT_TESTING_ONLY)
     LL_SPI_Disable(m_serial_interface.get_spi_handle());
 
     // set PB7/PB8 as GPIO outputs
@@ -90,7 +91,7 @@ void Driver::send_first_bit(DataLatchType latch_type [[maybe_unused]])
     spi2_init();
     LL_SPI_Enable(m_serial_interface.get_spi_handle());
     
-
+#endif
 }
 
 void Driver::set_padding_bits()
@@ -186,8 +187,9 @@ bool Driver::set_greyscale_cmd_rgb_at_position(uint16_t led_idx, uint16_t red_pw
     return true;
 }
 
-bool Driver::send_spi_bytes(LatchPinOption latch_option)
-{       
+bool Driver::send_spi_bytes(LatchPinOption latch_option [[maybe_unused]])
+{     
+#if not defined(X86_UNIT_TESTING_ONLY)  
     // send the bytes
     for (auto &byte: m_common_byte_register)
     {
@@ -214,7 +216,8 @@ bool Driver::send_spi_bytes(LatchPinOption latch_option)
     {
         LL_GPIO_SetOutputPin(m_serial_interface.get_lat_port(), m_serial_interface.get_lat_pin());
         LL_GPIO_ResetOutputPin(m_serial_interface.get_lat_port(), m_serial_interface.get_lat_pin());        
-    }        
+    }   
+#endif     
     return true;            
 
 }
