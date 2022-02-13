@@ -11,7 +11,7 @@
         #include <SEGGER_RTT.h>
     #endif
 #else
-    #include <ll_spi_utils.hpp>
+    #include <spi_utils.hpp>
 #endif
 
 namespace tlc5955 
@@ -197,13 +197,13 @@ bool Driver::send_spi_bytes(LatchPinOption latch_option [[maybe_unused]])
         LL_SPI_TransmitData8(m_serial_interface.get_spi_handle(), byte);
 
         // check the data has left the SPI FIFO before sending the next
-        if (!stm32::spi::ll_wait_for_txe_flag(m_serial_interface.get_spi_handle(), 1))
+        if (!stm32::spi::wait_for_txe_flag(m_serial_interface.get_spi_handle(), 1))
         {
             #if defined(USE_RTT) 
                 SEGGER_RTT_printf(0, "tlc5955::Driver::send_blocking_transmit(): Tx buffer is full"); 
             #endif
         }
-        if (!stm32::spi::ll_wait_for_bsy_flag(m_serial_interface.get_spi_handle(), 1))
+        if (!stm32::spi::wait_for_bsy_flag(m_serial_interface.get_spi_handle(), 1))
         {
             #if defined(USE_RTT) 
                 SEGGER_RTT_printf(0, "tlc5955::Driver::send_blocking_transmit(); SPI bus is busy"); 
