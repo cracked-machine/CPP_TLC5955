@@ -37,20 +37,17 @@
 #else
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wvolatile"
-		#include "main.h"
-        #include "tim.h"
-		#include "spi.h"
+		#include <stm32g0xx_ll_gpio.h>
+        #include <stm32g0xx_ll_bus.h>
+        #include <stm32g0xx_ll_system.h>
 	#pragma GCC diagnostic pop
+    #include <timer_manager.hpp>
 #endif
-
 
 #include <bitset_utils.hpp>
 #include <byte_utils.hpp>
-
-
 // disable dynamic allocation/copying
 #include <allocation_restricted_base.hpp>    
-
 
 namespace tlc5955
 {
