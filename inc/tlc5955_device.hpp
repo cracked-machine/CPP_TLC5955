@@ -47,7 +47,7 @@
 #include <bitset_utils.hpp>
 #include <byte_utils.hpp>
 // disable dynamic allocation/copying
-#include <allocation_restricted_base.hpp>    
+#include <restricted_base.hpp>    
 
 namespace tlc5955
 {

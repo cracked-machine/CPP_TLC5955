@@ -28,7 +28,7 @@
 
 namespace tlc5955 {
 
-class Driver : public AllocationRestrictedBase
+class Driver : public RestrictedBase
 {
 public:
     // @brief Construct a new Driver object
