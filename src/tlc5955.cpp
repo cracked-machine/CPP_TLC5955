@@ -45,7 +45,7 @@ void Driver::reset()
 void Driver::send_first_bit(DataLatchType latch_type [[maybe_unused]])
 {
 #if not defined(X86_UNIT_TESTING_ONLY)
-    LL_SPI_Disable(m_serial_interface.get_spi_handle());
+    stm32::spi::enable_spi(m_serial_interface.get_spi_handle(), false);
 
     // set PB7/PB8 as GPIO outputs
     gpio_init();
@@ -89,7 +89,7 @@ void Driver::send_first_bit(DataLatchType latch_type [[maybe_unused]])
 
     // set PB7/PB8 to SPI
     spi2_init();
-    LL_SPI_Enable(m_serial_interface.get_spi_handle());
+    stm32::spi::enable_spi(m_serial_interface.get_spi_handle());
     
 #endif
 }
@@ -194,7 +194,8 @@ bool Driver::send_spi_bytes(LatchPinOption latch_option [[maybe_unused]])
     for (auto &byte: m_common_byte_register)
     {
         // send the byte of data
-        LL_SPI_TransmitData8(m_serial_interface.get_spi_handle(), byte);
+        stm32::spi::transmit_byte(m_serial_interface.get_spi_handle(), byte);
+        // LL_SPI_TransmitData8(m_serial_interface.get_spi_handle(), byte);
 
         // check the data has left the SPI FIFO before sending the next
         if (!stm32::spi::wait_for_txe_flag(m_serial_interface.get_spi_handle(), 1))
@@ -275,10 +276,7 @@ void Driver::spi2_init(void)
 
         m_serial_interface.get_spi_handle()->CR1 = 0;
         m_serial_interface.get_spi_handle()->CR1 |=    
-            (LL_SPI_HALF_DUPLEX_TX | LL_SPI_MODE_MASTER | LL_SPI_POLARITY_LOW | LL_SPI_PHASE_1EDGE | 
-            LL_SPI_NSS_SOFT | LL_SPI_BAUDRATEPRESCALER_DIV8 | LL_SPI_MSB_FIRST | LL_SPI_CRCCALCULATION_DISABLE);
-
-        MODIFY_REG(m_serial_interface.get_spi_handle()->CR2, SPI_CR2_FRF, LL_SPI_PROTOCOL_MOTOROLA);
+            ((SPI_CR1_BIDIMODE | SPI_CR1_BIDIOE) | (SPI_CR1_MSTR | SPI_CR1_SSI) | SPI_CR1_SSM | SPI_CR1_BR_1);
 
         CLEAR_BIT(m_serial_interface.get_spi_handle()->CR2, SPI_CR2_NSSP);
 
