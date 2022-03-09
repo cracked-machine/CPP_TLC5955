@@ -39,7 +39,6 @@
 	#pragma GCC diagnostic ignored "-Wvolatile"
 		#include <stm32g0xx_ll_gpio.h>
         #include <stm32g0xx_ll_bus.h>
-        #include <stm32g0xx_ll_system.h>
 	#pragma GCC diagnostic pop
     #include <timer_manager.hpp>
 #endif
@@ -66,8 +65,6 @@ public:
     // @param sck_pin           The TLC5955 serial clock pin e.g. LL_GPIO_PIN_8
     // @param gsclk_tim         The TIM peripheral used to generate TLC5955 GSCLOCK pulse e.g. TIM4
     // @param gsclk_tim_ch      The timer channel used to output TLC5955 GSCLOCK pulse e.g. LL_TIM_CHANNEL_CH1
-    // @param mosi_fastmode     The fastmode configure bit for MOSI port/pin e.g. LL_SYSCFG_I2C_FASTMODEPLUS_PB7
-    // @param sck_fastmode      The fastmode configure bit for SCK port/pin e.g. LL_SYSCFG_I2C_FASTMODEPLUS_PB8
     // @param rcc_gpio_clk      The bit to enable the GPIO RCC (RCC_IOPENR) for the MOSI/SCK port e.g. LL_IOP_GRP1_PERIPH_GPIOB
     // @param rcc_spi_clk       The bit to enable the SPI RCC (RCC_APBENR1) for the MOSI/SCK port e.g. LL_APB1_GRP1_PERIPH_SPI2
 	DriverSerialInterface(
@@ -76,8 +73,6 @@ public:
         GPIO_TypeDef* mosi_port, uint16_t mosi_pin,
         GPIO_TypeDef* sck_port, uint16_t sck_pin,
         TIM_TypeDef* gsclk_tim, uint16_t gsclk_tim_ch,
-        uint32_t mosi_fastmode,
-        uint32_t sck_fastmode,
         uint32_t rcc_gpio_clk,
         uint32_t rcc_spi_clk)  
 	: m_led_spi(led_spi), 
@@ -85,7 +80,6 @@ public:
       m_mosi_port(mosi_port), m_mosi_pin(mosi_pin),
       m_sck_port(sck_port), m_sck_pin(sck_pin),
       m_gsclk_tim(gsclk_tim), m_gsclk_tim_ch(gsclk_tim_ch),
-      m_mosi_fastmode(mosi_fastmode), m_sck_fastmode(sck_fastmode),
       m_rcc_gpio_clk(rcc_gpio_clk), m_rcc_spi_clk(rcc_spi_clk)
 	{
 	}
@@ -99,8 +93,6 @@ public:
 	uint16_t get_sck_pin() { return m_sck_pin; }    
     TIM_TypeDef* get_gsclk_handle() { return m_gsclk_tim; }
     uint16_t get_gsclk_tim_ch() { return m_gsclk_tim_ch; }
-    uint32_t get_mosi_fastmode() { return m_mosi_fastmode; }
-    uint32_t get_sck_fastmode() { return m_sck_fastmode; }
     uint32_t get_rcc_gpio_clk() { return m_rcc_gpio_clk; }
     uint32_t get_rcc_spi_clk() { return m_rcc_spi_clk; }
 private:
@@ -122,10 +114,6 @@ private:
     TIM_TypeDef* m_gsclk_tim;
     // @brief output channel for GSCLK signal
     uint16_t m_gsclk_tim_ch;
-    // @brief The fastmode pin setting for MOSI (see LL_SYSCFG_EnableFastModePlus)
-    uint32_t m_mosi_fastmode;
-    // @brief The fastmode pin setting for SCK (see LL_SYSCFG_EnableFastModePlus)
-    uint32_t m_sck_fastmode;
     // @brief Used to enable the GPIO clock for MOSI and SCK pins (for writing first bit)
     uint32_t m_rcc_gpio_clk;
     // @brief Used to enable the SPI clock for MOSI and SCK pins (for writing 96 bytes data)

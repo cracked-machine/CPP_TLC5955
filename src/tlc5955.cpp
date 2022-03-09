@@ -27,9 +27,6 @@ Driver::Driver(DriverSerialInterface &serial_interface) : m_serial_interface(ser
         // Used to send subsequent 96 bytes over SPI
         SET_BIT(RCC->APBENR1, m_serial_interface.get_rcc_spi_clk());
 
-        LL_SYSCFG_EnableFastModePlus(m_serial_interface.get_mosi_fastmode());
-        LL_SYSCFG_EnableFastModePlus(m_serial_interface.get_sck_fastmode());
-
     #pragma GCC diagnostic pop  // ignored "-Wvolatile"  
     #endif // not X86_UNIT_TESTING_ONLY
 }
