@@ -68,17 +68,18 @@ public:
     // @param rcc_spi_clk       The bit to enable the SPI RCC (RCC_APBENR1) for the MOSI/SCK port e.g. LL_APB1_GRP1_PERIPH_SPI2
 	DriverSerialInterface(
         SPI_TypeDef *led_spi, 
-        GPIO_TypeDef* lat_port, uint16_t lat_pin, 
-        GPIO_TypeDef* mosi_port, uint16_t mosi_pin,
-        GPIO_TypeDef* sck_port, uint16_t sck_pin,
-        TIM_TypeDef* gsclk_tim, uint16_t gsclk_tim_ch,
+        std::pair<GPIO_TypeDef*, uint16_t>  lat_gpio,    // GPIO_TypeDef* lat_port, uint16_t lat_pin, 
+        std::pair<GPIO_TypeDef*, uint16_t>  mosi_gpio,   // GPIO_TypeDef* mosi_port, uint16_t mosi_pin,
+        std::pair<GPIO_TypeDef*, uint16_t>  sck_gpio,    // GPIO_TypeDef* sck_port, uint16_t sck_pin,
+        std::pair<TIM_TypeDef*, uint16_t>    gsclk_tim,
         uint32_t rcc_gpio_clk,
-        uint32_t rcc_spi_clk)  
+        uint32_t rcc_spi_clk
+    )  
 	: m_led_spi(led_spi), 
-      m_lat_port(lat_port), m_lat_pin(lat_pin), 
-      m_mosi_port(mosi_port), m_mosi_pin(mosi_pin),
-      m_sck_port(sck_port), m_sck_pin(sck_pin),
-      m_gsclk_tim(gsclk_tim), m_gsclk_tim_ch(gsclk_tim_ch),
+      m_lat_port(lat_gpio.first), m_lat_pin(lat_gpio.second),           // init latch port+pin
+      m_mosi_port(mosi_gpio.first), m_mosi_pin(mosi_gpio.second),       // init mosi port+pin 
+      m_sck_port(sck_gpio.first), m_sck_pin(sck_gpio.second),           // init sck port+pin
+      m_gsclk_tim(gsclk_tim.first), m_gsclk_tim_ch(gsclk_tim.second),
       m_rcc_gpio_clk(rcc_gpio_clk), m_rcc_spi_clk(rcc_spi_clk)
 	{
 	}
