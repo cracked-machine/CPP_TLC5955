@@ -282,14 +282,13 @@ void Driver::spi2_init(void)
 
         CLEAR_BIT(m_serial_interface.get_spi_handle()->CR2, SPI_CR2_NSSP);
 
-        // Enable the PWM OC
-        LL_TIM_CC_EnableChannel(m_serial_interface.get_gsclk_handle(), m_serial_interface.get_gsclk_tim_ch());
+        // Enable the PWM OC channel
+        m_serial_interface.get_gsclk_handle()->CCER = m_serial_interface.get_gsclk_handle()->CCER | m_serial_interface.get_gsclk_tim_ch();
         // required to enable output on some timers. e.g. TIM16
-        LL_TIM_EnableAllOutputs(m_serial_interface.get_gsclk_handle());
+        m_serial_interface.get_gsclk_handle()->BDTR = m_serial_interface.get_gsclk_handle()->BDTR | TIM_BDTR_MOE;
         // Enable the timer
-        LL_TIM_EnableCounter(m_serial_interface.get_gsclk_handle());
-
-        
+        m_serial_interface.get_gsclk_handle()->CR1 = m_serial_interface.get_gsclk_handle()->CR1 | TIM_CR1_CEN;
+               
 
     #pragma GCC diagnostic pop  // ignored "-Wvolatile"  
     #endif // not X86_UNIT_TESTING_ONLY
