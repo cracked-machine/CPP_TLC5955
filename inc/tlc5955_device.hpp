@@ -38,7 +38,6 @@
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wvolatile"
 		#include <stm32g0xx_ll_gpio.h>
-        #include <stm32g0xx_ll_bus.h>
 	#pragma GCC diagnostic pop
     #include <timer_manager.hpp>
 #endif
