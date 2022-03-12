@@ -196,22 +196,7 @@ bool Driver::send_spi_bytes(LatchPinOption latch_option [[maybe_unused]])
     for (auto &byte: m_common_byte_register)
     {
         // send the byte of data
-        stm32::spi::transmit_byte(m_serial_interface.get_spi_handle(), byte);
-        // LL_SPI_TransmitData8(m_serial_interface.get_spi_handle(), byte);
-
-        // check the data has left the SPI FIFO before sending the next
-        if (!stm32::spi::wait_for_txe_flag(m_serial_interface.get_spi_handle(), 1))
-        {
-            #if defined(USE_RTT) 
-                SEGGER_RTT_printf(0, "tlc5955::Driver::send_blocking_transmit(): Tx buffer is full"); 
-            #endif
-        }
-        if (!stm32::spi::wait_for_bsy_flag(m_serial_interface.get_spi_handle(), 1))
-        {
-            #if defined(USE_RTT) 
-                SEGGER_RTT_printf(0, "tlc5955::Driver::send_blocking_transmit(); SPI bus is busy"); 
-            #endif
-        }   
+        stm32::spi::send_byte(m_serial_interface.get_spi_handle(), byte);
     }     
 
     // tell each daisy-chained driver chip to latch all data from its common register
