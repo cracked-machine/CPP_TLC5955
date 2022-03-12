@@ -23,13 +23,13 @@ Driver::Driver(DriverSerialInterface &serial_interface) : m_serial_interface(ser
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wvolatile"    
         
-        // Used to send first bit
+        // Setup GPIO clock. Used to send first bit
         __IO uint32_t tmpreg;
         RCC->IOPENR = RCC->IOPENR | m_serial_interface.get_rcc_gpio_clk();
         tmpreg = (RCC->IOPENR & m_serial_interface.get_rcc_gpio_clk());
         (void)tmpreg;
 
-        // Used to send subsequent 96 bytes over SPI
+        // Setup SPI clock. Used to send subsequent 96 bytes over SPI
         SET_BIT(RCC->APBENR1, m_serial_interface.get_rcc_spi_clk());
 
     #pragma GCC diagnostic pop  // ignored "-Wvolatile"  
