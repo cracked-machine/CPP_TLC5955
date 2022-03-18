@@ -24,7 +24,6 @@
 #include <catch2/catch_all.hpp>
 #include <iostream>
 #include <tlc5955_tester.hpp>
-#include <algorithm>
 
 // TLC5955 device datasheet:
 // https://www.ti.com/lit/ds/symlink/tlc5955.pdf

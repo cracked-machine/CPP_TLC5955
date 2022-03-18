@@ -26,9 +26,7 @@
 
 
 #include <stdint.h>
-#include <bitset>
 #include <array>
-#include <memory>
 
 #if defined(X86_UNIT_TESTING_ONLY)
 	// only used when unit testing on x86

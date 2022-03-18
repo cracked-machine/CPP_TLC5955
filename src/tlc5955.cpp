@@ -1,7 +1,6 @@
 
 #include "tlc5955.hpp"
 
-#include <sstream>
 #include <cmath>
 #include <cstring>
 #include <cassert>
