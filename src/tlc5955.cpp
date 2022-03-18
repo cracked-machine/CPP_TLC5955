@@ -148,7 +148,7 @@ void Driver::set_dot_correction_cmd_all(uint8_t pwm)
 	}
 }
 
-void Driver::set_greyscale_cmd_rgb(uint16_t red_pwm, uint16_t green_pwm, uint16_t blue_pwm)
+void Driver::set_greyscale_cmd_rgb(uint16_t blue_pwm, uint16_t green_pwm, uint16_t red_pwm)
 {
     const std::bitset<m_gs_data_size> blue_gs_pwm_cmd {blue_pwm}; 
     const std::bitset<m_gs_data_size> green_gs_pwm_cmd {green_pwm}; 
