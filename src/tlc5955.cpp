@@ -16,7 +16,7 @@
 namespace tlc5955 
 {
 
-Driver::Driver(DriverSerialInterface &serial_interface) : m_serial_interface(serial_interface)
+Driver::Driver(const DriverSerialInterface &serial_interface) : m_serial_interface(serial_interface)
 {
     #if not defined(X86_UNIT_TESTING_ONLY)
     #pragma GCC diagnostic push

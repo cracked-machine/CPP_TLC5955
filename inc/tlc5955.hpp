@@ -33,7 +33,7 @@ class Driver : public RestrictedBase
 public:
     // @brief Construct a new Driver object
     // @param serial_interface tlc5955::DriverSerialInterface object containing the SPI device pointer and related pins/ports/settings
-    explicit Driver(DriverSerialInterface &serial_interface);
+    explicit Driver(const DriverSerialInterface &serial_interface);
 
     // @brief The type of first bit to send
     enum class DataLatchType {
