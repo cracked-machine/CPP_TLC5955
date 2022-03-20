@@ -27,8 +27,14 @@ Driver::Driver(const DriverSerialInterface &serial_interface) : m_serial_interfa
         (void)tmpreg;
 
         // Setup SPI clock. Used to send subsequent 96 bytes over SPI
+        #ifndef X86_UNIT_TESTING_ONLY
+        #pragma GCC diagnostic push
+	    #pragma GCC diagnostic ignored "-Wvolatile"
+        #endif
         SET_BIT(RCC->APBENR1, m_serial_interface.get_rcc_spi_clk());
-
+        #ifndef X86_UNIT_TESTING_ONLY
+        #pragma GCC diagnostic pop
+        #endif
 }
 
 // @brief class to implement TLC5955 LED Driver IC
