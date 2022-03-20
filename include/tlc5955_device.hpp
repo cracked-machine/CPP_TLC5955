@@ -29,9 +29,9 @@
 #include <array>
 
 #if defined(X86_UNIT_TESTING_ONLY)
-	// only used when unit testing on x86
-    #include <mock_cmsis.hpp>
 	#include <iostream>
+    // This file should contain bit definitions
+    #include <mock_cmsis.hpp>
 #else
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wvolatile"
