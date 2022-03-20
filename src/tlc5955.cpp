@@ -18,9 +18,7 @@ namespace tlc5955
 
 Driver::Driver(const DriverSerialInterface &serial_interface) : m_serial_interface(serial_interface)
 {
-    #if not defined(X86_UNIT_TESTING_ONLY)
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wvolatile"    
+ 
         
         // Setup GPIO clock. Used to send first bit
         __IO uint32_t tmpreg;
@@ -31,8 +29,6 @@ Driver::Driver(const DriverSerialInterface &serial_interface) : m_serial_interfa
         // Setup SPI clock. Used to send subsequent 96 bytes over SPI
         SET_BIT(RCC->APBENR1, m_serial_interface.get_rcc_spi_clk());
 
-    #pragma GCC diagnostic pop  // ignored "-Wvolatile"  
-    #endif // not X86_UNIT_TESTING_ONLY
 }
 
 // @brief class to implement TLC5955 LED Driver IC
