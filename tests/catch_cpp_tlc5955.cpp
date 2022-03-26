@@ -28,6 +28,11 @@
 // TLC5955 device datasheet:
 // https://www.ti.com/lit/ds/symlink/tlc5955.pdf
 
+TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
+{
+    REQUIRE(true);
+}
+
 
 // TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
 // {
