@@ -5,12 +5,7 @@
 
 See the [wiki](https://github.com/cracked-machine/cpp_tlc5955/wiki) for documentation / reference
 
-See `.vscode/tasks.json` for details on the individual toolchain commands.
-#### Running Units Tests on X86
-
-When you run the default CMake build, the output is linked with the Catch2 library. To run the testsuite use the command:
-`./build/test_suite`
-
+See the [readme](tests/README.md) for test info.
 
 #### Adding this library to your STM32 Project
 

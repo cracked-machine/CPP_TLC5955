@@ -23,13 +23,30 @@
 
 #include <catch2/catch_all.hpp>
 #include <iostream>
-#include <tlc5955_tester.hpp>
+// #include <tlc5955_tester.hpp>
+#include <tlc5955.hpp>
 
 // TLC5955 device datasheet:
 // https://www.ti.com/lit/ds/symlink/tlc5955.pdf
 
 TEST_CASE("Testing TLC5955 common register", "[tlc5955]")
 {
+    // create the RCC instance that is usually present when running on STM32
+    RCC = new RCC_TypeDef;
+    
+	// SPI peripheral for TLC5955 LED driver serial communication
+	tlc5955::DriverSerialInterface tlc5955_spi_interface(
+		SPI2, 
+		std::make_pair(GPIOB, GPIO_BSRR_BS9), 	// latch port+pin
+		std::make_pair(GPIOB, GPIO_BSRR_BS7), 	// mosi port+pin 
+		std::make_pair(GPIOB, GPIO_BSRR_BS8), 	// sck port+pin
+		std::make_pair(TIM4, TIM_CCER_CC1E),	// gsclk timer+channel
+		RCC_IOPENR_GPIOBEN, 					// for enabling GPIOB clock
+		RCC_APBENR1_SPI2EN  					// for enabling SPI2 clock
+	);
+
+    tlc5955::Driver d(tlc5955_spi_interface);
+
     REQUIRE(true);
 }
 
