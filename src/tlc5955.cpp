@@ -110,11 +110,12 @@ void Driver::set_ctrl_cmd()
 void Driver::set_function_cmd(DisplayFunction dsprpt, TimingFunction tmgrst, RefreshFunction rfresh, PwmFunction espwm, ShortDetectFunction lsdvlt)
 {
     std::bitset<m_func_cmd_size> function_cmd {};
-    (dsprpt == DisplayFunction::display_repeat_on)          ? function_cmd.set(4, true) : function_cmd.set(4, false);
-    (tmgrst == TimingFunction::timing_reset_on)             ? function_cmd.set(3, true) : function_cmd.set(3, false);
-    (rfresh == RefreshFunction::auto_refresh_on)            ? function_cmd.set(2, true) : function_cmd.set(2, false);
-    (espwm == PwmFunction::enhanced_pwm)                    ? function_cmd.set(1, true) : function_cmd.set(1, false);
-    (lsdvlt == ShortDetectFunction::threshold_90_percent)   ? function_cmd.set(0, true) : function_cmd.set(0, false);
+    // don't use std::bitset.set(), this will force exception handling to bloat the linked .elf
+    (dsprpt == DisplayFunction::display_repeat_on)          ? (function_cmd[4] = true) : (function_cmd[4] = false);
+    (tmgrst == TimingFunction::timing_reset_on)             ? (function_cmd[3] = true) : (function_cmd[3] = false);
+    (rfresh == RefreshFunction::auto_refresh_on)            ? (function_cmd[2] = true) : (function_cmd[2] = false);
+    (espwm == PwmFunction::enhanced_pwm)                    ? (function_cmd[1] = true) : (function_cmd[1] = false);
+    (lsdvlt == ShortDetectFunction::threshold_90_percent)   ? (function_cmd[0] = true) : (function_cmd[0] = false);
     noarch::bit_manip::insert_bitset_at_offset(m_common_bit_register, function_cmd, m_func_cmd_offset);    
 }
 
