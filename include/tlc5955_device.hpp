@@ -29,8 +29,6 @@
 #include <array>
 
 #if defined(X86_UNIT_TESTING_ONLY)
-	#include <iostream>
-    // This file should contain bit definitions
     #include <mock.hpp>
 #else
 	#pragma GCC diagnostic push
