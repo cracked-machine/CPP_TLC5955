@@ -23,6 +23,10 @@ if(CMAKE_PROJECT_NAME STREQUAL TLC5595_TEST_SUITE)
 
     # add external deps from git repos
     include(cmake/external.cmake)
+    # we only need to include this for unit testing
+    target_include_directories(${BUILD_NAME} PRIVATE 
+        ${CMAKE_BINARY_DIR}/embedded_utils/tests/mocks
+    )    
 
     # enable static analysis
     include(cmake/cppcheck.cmake)
