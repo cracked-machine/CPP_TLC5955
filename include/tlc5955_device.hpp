@@ -28,9 +28,7 @@
 #include <stdint.h>
 #include <array>
 
-#if defined(X86_UNIT_TESTING_ONLY)
-    #include <mock.hpp>
-#else
+#ifndef X86_UNIT_TESTING_ONLY
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wvolatile"
 		#include <stm32g0xx_ll_gpio.h>

@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!DOCTYPE coverage SYSTEM 'http://cobertura.sourceforge.net/xml/coverage-04.dtd'>
-<coverage line-rate="0.1839080459770115" function-rate="0.14285714285714285" branch-rate="0.0" lines-covered="16" lines-valid="87" functions-covered="4" functions-valid="28" branches-covered="0" branches-valid="74" complexity="0.0" timestamp="1649526251" version="gcovr 5.1">
+<coverage line-rate="0.1839080459770115" function-rate="0.14285714285714285" branch-rate="0.0" lines-covered="16" lines-valid="87" functions-covered="4" functions-valid="28" branches-covered="0" branches-valid="74" complexity="0.0" timestamp="1649532473" version="gcovr 5.1">
   <sources>
     <source>/home/chris/Projects/Embedded/BassStation/BassStationSequencerSW/extern/cpp_tlc5955</source>
   </sources>
@@ -10,25 +10,25 @@
         <class name="tlc5955_device_hpp" filename="include/tlc5955_device.hpp" line-rate="0.5263157894736842" branch-rate="0.0" complexity="0.0">
           <methods/>
           <lines>
-            <line number="70" hits="1" branch="false"/>
+            <line number="66" hits="1" branch="false"/>
+            <line number="75" hits="1" branch="false"/>
+            <line number="76" hits="1" branch="false"/>
+            <line number="77" hits="1" branch="false"/>
+            <line number="78" hits="1" branch="false"/>
             <line number="79" hits="1" branch="false"/>
             <line number="80" hits="1" branch="false"/>
-            <line number="81" hits="1" branch="false"/>
             <line number="82" hits="1" branch="false"/>
-            <line number="83" hits="1" branch="false"/>
-            <line number="84" hits="1" branch="false"/>
-            <line number="86" hits="1" branch="false"/>
+            <line number="84" hits="0" branch="false"/>
+            <line number="85" hits="0" branch="false"/>
+            <line number="86" hits="0" branch="false"/>
+            <line number="87" hits="0" branch="false"/>
             <line number="88" hits="0" branch="false"/>
             <line number="89" hits="0" branch="false"/>
             <line number="90" hits="0" branch="false"/>
             <line number="91" hits="0" branch="false"/>
             <line number="92" hits="0" branch="false"/>
-            <line number="93" hits="0" branch="false"/>
-            <line number="94" hits="0" branch="false"/>
-            <line number="95" hits="0" branch="false"/>
-            <line number="96" hits="0" branch="false"/>
-            <line number="97" hits="2" branch="false"/>
-            <line number="98" hits="1" branch="false"/>
+            <line number="93" hits="2" branch="false"/>
+            <line number="94" hits="1" branch="false"/>
           </lines>
         </class>
       </classes>

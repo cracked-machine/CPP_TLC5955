@@ -5,7 +5,7 @@
 
 See the [wiki](https://github.com/cracked-machine/cpp_tlc5955/wiki) for documentation / reference
 
-See the [readme](tests/README.md) for test info.
+See the [readme](tests) for test info.
 
 #### Adding this library to your STM32 Project
 
