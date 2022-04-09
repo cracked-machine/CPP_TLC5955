@@ -9,20 +9,9 @@ See the [readme](tests) for test info.
 
 #### Adding this library to your STM32 Project
 
-There are two ways to add this library to your project's CMakeLists.txt:
-
-1. Implicitly include the [external.cmake](cmake/external.cmake):
+Add this repo ([cpp_tlc5955](https://github.com/cracked-machine/cpp_tlc5955.git)) to your project as a submodule and add the subdirectory:
 
 ```
-set(BUILD_NAME "MyProject")
-add_executable(${BUILD_NAME} "")
-include(cmake/external.cmake)
-```
-
-2. Explicitly add the [embedded_utils](https://github.com/cracked-machine/embedded_utils.git) and [stm32_interrupt_managers](https://github.com/cracked-machine/stm32_interrupt_managers.git) to your project as submodules and add the subdirectories:
-
-```
-add_subdirectory(extern/embedded_utils)
-add_subdirectory(extern/stm32_interrupt_managers)
+add_subdirectory(extern/cpp_tlc5955)
 ```
 
