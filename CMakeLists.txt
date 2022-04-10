@@ -11,11 +11,15 @@ if(CMAKE_PROJECT_NAME STREQUAL TLC5595_TEST_SUITE)
     configure_file(cmake/gnuc_ext_defs.hpp.in ${CMAKE_CURRENT_BINARY_DIR}/include/gnuc_ext_defs.hpp @ONLY)
     include_directories(build/include)
 
-    # include the mock library with all unit test build source files
-    add_definitions(-include ${CMAKE_BINARY_DIR}/embedded_utils/tests/mocks/mock.hpp) 
-
     # x86 build config
     include(cmake/linux.cmake)
+
+    # The define will let unit tests load the mocked stm32g0xx.h (tests/mocks/stm32g0xx.h)
+    add_compile_definitions(${BUILD_NAME} STM32G0B1xx)
+
+    # include these in all source files for convenient stdout with unit tests
+    add_definitions(-include iostream)  
+    add_definitions(-include iomanip)    
 
     # BUILD_NAME is set in cmake/linux.cmake
     add_executable(${BUILD_NAME} "")

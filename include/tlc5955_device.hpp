@@ -24,7 +24,7 @@
 #ifndef __TLC5955_DEVICE_HPP__
 #define __TLC5955_DEVICE_HPP__
 
-
+#include <stm32g0xx.h>
 #include <stdint.h>
 #include <array>
 
