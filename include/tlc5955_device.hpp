@@ -41,9 +41,6 @@
 // disable dynamic allocation/copying
 #include <restricted_base.hpp>    
 
-// defines "USED_API __attribute__((__used__))"
-#include <gnuc_ext_defs.hpp>
-
 namespace tlc5955
 {
 
@@ -63,7 +60,7 @@ public:
     // @param gsclk_tim_ch      The timer channel used to output TLC5955 GSCLOCK pulse e.g. LL_TIM_CHANNEL_CH1
     // @param rcc_gpio_clk      The bit to enable the GPIO RCC (RCC_IOPENR) for the MOSI/SCK port e.g. LL_IOP_GRP1_PERIPH_GPIOB
     // @param rcc_spi_clk       The bit to enable the SPI RCC (RCC_APBENR1) for the MOSI/SCK port e.g. LL_APB1_GRP1_PERIPH_SPI2
-	USED_API DriverSerialInterface(
+	DriverSerialInterface(
         SPI_TypeDef *led_spi, 
         std::pair<GPIO_TypeDef*, uint16_t>  lat_gpio,    // GPIO_TypeDef* lat_port, uint16_t lat_pin, 
         std::pair<GPIO_TypeDef*, uint16_t>  mosi_gpio,   // GPIO_TypeDef* mosi_port, uint16_t mosi_pin,
@@ -81,17 +78,17 @@ public:
 	{
 	}
 
-	USED_API SPI_TypeDef * get_spi_handle() { return m_led_spi; }
-	USED_API GPIO_TypeDef* get_lat_port() { return m_lat_port; }
-	USED_API uint16_t get_lat_pin() { return m_lat_pin; }
-	USED_API GPIO_TypeDef* get_mosi_port() { return m_mosi_port; }
-	USED_API uint16_t get_mosi_pin() { return m_mosi_pin; }
-	USED_API GPIO_TypeDef* get_sck_port() { return m_sck_port; }
-	USED_API uint16_t get_sck_pin() { return m_sck_pin; }    
-    USED_API TIM_TypeDef* get_gsclk_handle() { return m_gsclk_tim; }
-    USED_API uint16_t get_gsclk_tim_ch() { return m_gsclk_tim_ch; }
-    USED_API uint32_t get_rcc_gpio_clk() { return m_rcc_gpio_clk; }
-    USED_API uint32_t get_rcc_spi_clk() { return m_rcc_spi_clk; }
+	SPI_TypeDef * get_spi_handle() { return m_led_spi; }
+	GPIO_TypeDef* get_lat_port() { return m_lat_port; }
+	uint16_t get_lat_pin() { return m_lat_pin; }
+	GPIO_TypeDef* get_mosi_port() { return m_mosi_port; }
+	uint16_t get_mosi_pin() { return m_mosi_pin; }
+	GPIO_TypeDef* get_sck_port() { return m_sck_port; }
+	uint16_t get_sck_pin() { return m_sck_pin; }    
+    TIM_TypeDef* get_gsclk_handle() { return m_gsclk_tim; }
+    uint16_t get_gsclk_tim_ch() { return m_gsclk_tim_ch; }
+    uint32_t get_rcc_gpio_clk() { return m_rcc_gpio_clk; }
+    uint32_t get_rcc_spi_clk() { return m_rcc_spi_clk; }
 private:
 	// @brief The SPI peripheral
 	SPI_TypeDef *m_led_spi;
