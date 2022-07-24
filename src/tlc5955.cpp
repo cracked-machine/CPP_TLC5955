@@ -36,6 +36,32 @@ Driver::Driver(const DriverSerialInterface &serial_interface) : m_serial_interfa
 #endif
 }
 
+void Driver::init(DisplayFunction display, TimingFunction timing, RefreshFunction refresh, PwmFunction pwm,
+                  ShortDetectFunction short_detect, std::array<uint8_t, 3> global_brightness,
+                  std::array<uint8_t, 3> max_current, uint8_t global_dot_correction)
+{
+
+    reset();
+    set_ctrl_cmd();
+    set_padding_bits();
+    set_function_cmd(display, timing, refresh, pwm, short_detect);
+
+    set_global_brightness_cmd(global_brightness[0], global_brightness[1], global_brightness[2]);
+    set_max_current_cmd(max_current[0], max_current[1], max_current[2]);
+    set_dot_correction_cmd_all(global_dot_correction);
+
+    // prepare SPI transmit data as bytes
+    process_register();
+
+    // send data for top row (no latch)
+    send_first_bit(DataLatchType::control);
+    send_spi_bytes(LatchPinOption::no_latch);
+
+    // send data for bottom row
+    send_first_bit(DataLatchType::control);
+    send_spi_bytes(LatchPinOption::latch_after_send);
+}
+
 // @brief class to implement TLC5955 LED Driver IC
 // Refer to datasheet - https://www.ti.com/lit/ds/symlink/tlc5955.pdf
 void Driver::reset()

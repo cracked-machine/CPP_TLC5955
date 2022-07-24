@@ -164,6 +164,22 @@ class Driver : public RestrictedBase
         threshold_90_percent
     };
 
+    /// @brief Send configuration data to TLC5955.
+    /// @param display Set the auto display repeat function
+    /// @param timing Set the display timing reset mode
+    /// @param refresh Set the auto data refresh mode
+    /// @param pwm Set ES-PWM mode
+    /// @param short_detect Set LED short detection voltage mode
+    /// @param global_brightness Set the global brightness for red, green blue channels
+    /// @param max_current Set the max current protection for red, blue, green channels
+    /// @param global_dot_correction Set the dot correction for all LED channels
+    void init(DisplayFunction display = DisplayFunction::display_repeat_off,
+              TimingFunction timing = TimingFunction::timing_reset_off,
+              RefreshFunction refresh = RefreshFunction::auto_refresh_off, PwmFunction pwm = PwmFunction::normal_pwm,
+              ShortDetectFunction short_detect = ShortDetectFunction::threshold_90_percent,
+              std::array<uint8_t, 3> global_brightness = {{0x1, 0x1, 0x1}},
+              std::array<uint8_t, 3> max_current = {{0x1, 0x1, 0x1}}, uint8_t global_dot_correction = 0x1F);
+
     // @brief Clears (zeroize) the common register
     void reset();
 
