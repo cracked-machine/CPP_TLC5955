@@ -15,3 +15,6 @@ Add this repo ([cpp_tlc5955](https://github.com/cracked-machine/cpp_tlc5955.git)
 add_subdirectory(extern/cpp_tlc5955)
 ```
 
+#### External Dependencies
+
+[Embedded Utils](https://github.com/cracked-machine/embedded_utils)
