@@ -50,9 +50,6 @@ void Driver::init(DisplayFunction display, TimingFunction timing, RefreshFunctio
     set_max_current_cmd(max_current[0], max_current[1], max_current[2]);
     set_dot_correction_cmd_all(global_dot_correction);
 
-    // prepare SPI transmit data as bytes
-    process_register();
-
     // send data for top row (no latch)
     send_first_bit(DataLatchType::control);
     send_spi_bytes(LatchPinOption::no_latch);
@@ -73,6 +70,10 @@ void Driver::reset()
 void Driver::send_first_bit(DataLatchType latch_type [[maybe_unused]])
 {
 #if not defined(X86_UNIT_TESTING_ONLY)
+
+    // convert the bit buffer to bytes
+    noarch::bit_manip::bitset_to_bytearray(m_common_byte_register, m_common_bit_register);
+
     stm32::spi::enable_spi(m_serial_interface.get_spi_handle(), false);
 
     // set PB7/PB8 as GPIO outputs
@@ -244,13 +245,6 @@ bool Driver::send_spi_bytes(LatchPinOption latch_option [[maybe_unused]])
     }
 #endif
     return true;
-}
-
-void Driver::process_register()
-{
-    // noarch::bit_manip::print_bits(m_common_bit_register);
-    noarch::bit_manip::bitset_to_bytearray(m_common_byte_register, m_common_bit_register);
-    // noarch::byte_manip::print_bytes(m_common_byte_register);
 }
 
 void Driver::gpio_init(void)

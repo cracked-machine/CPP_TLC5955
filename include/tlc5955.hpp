@@ -61,9 +61,6 @@ namespace tlc5955
 // m_tlc5955_driver.set_max_current_cmd(0x1, 0x1, 0x1);
 // m_tlc5955_driver.set_dot_correction_cmd_all(0x1F);
 
-// // prepare SPI transmit data as bytes
-// m_tlc5955_driver.process_register();
-
 // // send data for top row (no latch)
 // m_tlc5955_driver.send_first_bit(tlc5955::Driver::DataLatchType::control);
 // m_tlc5955_driver.send_spi_bytes(tlc5955::Driver::LatchPinOption::no_latch);
@@ -76,13 +73,11 @@ namespace tlc5955
 //
 // // daisy-chained chips 0 : n-1
 // m_tlc5955_driver.set_greyscale_cmd_rgb
-// m_tlc5955_driver.process_register()
 // m_tlc5955_driver.send_first_bit(tlc5955::Driver::DataLatchType::data);
 // m_tlc5955_driver.send_spi_bytes(tlc5955::Driver::LatchPinOption::no_latch);
 //
 // // daisy-chained chip n
 // m_tlc5955_driver.set_greyscale_cmd_rgb
-// m_tlc5955_driver.process_register()
 // m_tlc5955_driver.send_first_bit(tlc5955::Driver::DataLatchType::data);
 // m_tlc5955_driver.send_spi_bytes(tlc5955::Driver::LatchPinOption::latch_after_send);
 
@@ -242,9 +237,6 @@ class Driver : public RestrictedBase
     // @brief Send the buffer once to the TLC5955 chip via SPI and options with/without latch
     // @param latch_option latch after send or no latch after send
     bool send_spi_bytes(LatchPinOption latch_option);
-
-    // @brief convert the buffer from bits (std::bitset) to bytes (std::array).
-    void process_register();
 
   protected:
     // @brief The number of bytes in the buffer
