@@ -81,6 +81,18 @@ namespace tlc5955
 // m_tlc5955_driver.send_first_bit(tlc5955::Driver::DataLatchType::data);
 // m_tlc5955_driver.send_spi_bytes(tlc5955::Driver::LatchPinOption::latch_after_send);
 
+// @brief The preset colours available
+enum class LedColour
+{
+    red,
+    blue,
+    green,
+    magenta,
+    yellow,
+    cyan,
+    white,
+};
+
 class Driver : public RestrictedBase
 
 {
@@ -233,6 +245,11 @@ class Driver : public RestrictedBase
     // @param green_pwm Must be value: 0-2^16
     // @param blue_pwm Must be value: 0-2^16
     bool set_greyscale_cmd_rgb_at_position(uint16_t led_idx, uint16_t red_pwm, uint16_t green_pwm, uint16_t blue_pwm);
+
+    // @brief Helper function that maps RGB pwm values to preset primary and secondary colours
+    // @param position Set the LED at this position in the buffer
+    // @param colour The colour to set it to
+    void set_position_and_colour(uint16_t position, LedColour colour);
 
     // @brief Send the buffer once to the TLC5955 chip via SPI and options with/without latch
     // @param latch_option latch after send or no latch after send

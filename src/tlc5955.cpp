@@ -227,6 +227,35 @@ bool Driver::set_greyscale_cmd_rgb_at_position(uint16_t led_idx, uint16_t red_pw
     return true;
 }
 
+void Driver::set_position_and_colour(uint16_t position, LedColour colour)
+{
+    uint16_t greyscale_pwm{0xFFFF};
+    switch (colour)
+    {
+    case LedColour::red:
+        set_greyscale_cmd_rgb_at_position(position, greyscale_pwm, 0, 0);
+        break;
+    case LedColour::green:
+        set_greyscale_cmd_rgb_at_position(position, 0, greyscale_pwm, 0);
+        break;
+    case LedColour::blue:
+        set_greyscale_cmd_rgb_at_position(position, 0, 0, greyscale_pwm);
+        break;
+    case LedColour::magenta:
+        set_greyscale_cmd_rgb_at_position(position, greyscale_pwm, 0, greyscale_pwm);
+        break;
+    case LedColour::yellow:
+        set_greyscale_cmd_rgb_at_position(position, greyscale_pwm, greyscale_pwm, 0);
+        break;
+    case LedColour::cyan:
+        set_greyscale_cmd_rgb_at_position(position, 0, greyscale_pwm, greyscale_pwm);
+        break;
+    case LedColour::white:
+        set_greyscale_cmd_rgb_at_position(position, greyscale_pwm, greyscale_pwm, greyscale_pwm);
+        break;
+    }
+}
+
 bool Driver::send_spi_bytes(LatchPinOption latch_option [[maybe_unused]])
 {
 #if not defined(X86_UNIT_TESTING_ONLY)
