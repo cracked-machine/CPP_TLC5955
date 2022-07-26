@@ -130,10 +130,11 @@ class Driver : public RestrictedBase
     enum class TimingFunction
     {
         // @brief The GS counter is not reset and the outputs are not forced off even when a LAT rising edge is input
-        // for a GS data write.
+        // for a GS data write. LEDs will flash with greyscale PWM duty cycle.
         timing_reset_off,
         // @brief The GS counter is reset to 0 and all outputs are forced off at the LAT rising edge for a GS data
-        // write. Afterwards, PWM control resumes from the next GSCLK rising edge.
+        // write. Afterwards, PWM control resumes from the next GSCLK rising edge. LEDs will be dimmed with greyscale
+        // PWM duty cycle.
         timing_reset_on
     };
 
@@ -181,7 +182,7 @@ class Driver : public RestrictedBase
     /// @param max_current Set the max current protection for red, blue, green channels
     /// @param global_dot_correction Set the dot correction for all LED channels
     void init(DisplayFunction display = DisplayFunction::display_repeat_off,
-              TimingFunction timing = TimingFunction::timing_reset_off,
+              TimingFunction timing = TimingFunction::timing_reset_on,
               RefreshFunction refresh = RefreshFunction::auto_refresh_off, PwmFunction pwm = PwmFunction::normal_pwm,
               ShortDetectFunction short_detect = ShortDetectFunction::threshold_90_percent,
               std::array<uint8_t, 3> global_brightness = {{0x1, 0x1, 0x1}},
