@@ -10,7 +10,7 @@
     #include <SEGGER_RTT.h>
   #endif
 #else
-  #include <spi_utils.hpp>
+  #include <spi_utils_ref.hpp>
 #endif
 
 namespace tlc5955
@@ -80,48 +80,48 @@ void Driver::send_first_bit(DataLatchType latch_type [[maybe_unused]])
   // convert the bit buffer to bytes
   noarch::bit_manip::bitset_to_bytearray(m_common_byte_register, m_common_bit_register);
 
-  stm32::spi::enable_spi(m_serial_interface.get_spi_handle(), false);
+  stm32::spi_ref::enable_spi(m_serial_interface.get_spi_handle(), false);
 
   // set PB7/PB8 as GPIO outputs
   gpio_init();
 
   // make sure LAT pin is low otherwise first latch may be skipped (and TLC5955 will initialise intermittently)
-  LL_GPIO_ResetOutputPin(m_serial_interface.get_lat_port(), m_serial_interface.get_lat_pin());
+  LL_GPIO_ResetOutputPin(&m_serial_interface.get_lat_port(), m_serial_interface.get_lat_pin());
 
   // "Control Data Latch" - Start SPI transacation by clocking in one high bit
   if (latch_type == DataLatchType::control)
   {
     // reset both SCK and MOSI
-    LL_GPIO_ResetOutputPin(m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin());
-    LL_GPIO_ResetOutputPin(m_serial_interface.get_mosi_port(), m_serial_interface.get_sck_pin());
+    LL_GPIO_ResetOutputPin(&m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin());
+    LL_GPIO_ResetOutputPin(&m_serial_interface.get_mosi_port(), m_serial_interface.get_sck_pin());
 
     // MOSI data clocked on high(1) rising edge of SCK
-    LL_GPIO_SetOutputPin(m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin());
-    LL_GPIO_SetOutputPin(m_serial_interface.get_mosi_port(), m_serial_interface.get_sck_pin());
+    LL_GPIO_SetOutputPin(&m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin());
+    LL_GPIO_SetOutputPin(&m_serial_interface.get_mosi_port(), m_serial_interface.get_sck_pin());
 
     // reset both SCK and MOSI
-    LL_GPIO_ResetOutputPin(m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin());
-    LL_GPIO_ResetOutputPin(m_serial_interface.get_mosi_port(), m_serial_interface.get_sck_pin());
+    LL_GPIO_ResetOutputPin(&m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin());
+    LL_GPIO_ResetOutputPin(&m_serial_interface.get_mosi_port(), m_serial_interface.get_sck_pin());
   }
   // "GS Data Latch" - Start SPI transacation by clocking in one low bit
   else
   {
     // reset both SCK and MOSI
-    LL_GPIO_ResetOutputPin(m_serial_interface.get_mosi_port(), m_serial_interface.get_sck_pin());
-    LL_GPIO_ResetOutputPin(m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin());
+    LL_GPIO_ResetOutputPin(&m_serial_interface.get_mosi_port(), m_serial_interface.get_sck_pin());
+    LL_GPIO_ResetOutputPin(&m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin());
 
     // MOSI data clocked low(0) on rising edge of SCK
-    LL_GPIO_SetOutputPin(m_serial_interface.get_mosi_port(), m_serial_interface.get_sck_pin());
-    LL_GPIO_ResetOutputPin(m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin());
+    LL_GPIO_SetOutputPin(&m_serial_interface.get_mosi_port(), m_serial_interface.get_sck_pin());
+    LL_GPIO_ResetOutputPin(&m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin());
 
     // reset both SCK and MOSI
-    LL_GPIO_ResetOutputPin(m_serial_interface.get_mosi_port(), m_serial_interface.get_sck_pin());
-    LL_GPIO_ResetOutputPin(m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin());
+    LL_GPIO_ResetOutputPin(&m_serial_interface.get_mosi_port(), m_serial_interface.get_sck_pin());
+    LL_GPIO_ResetOutputPin(&m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin());
   }
 
   // set PB7/PB8 to SPI
   spi2_init();
-  stm32::spi::enable_spi(m_serial_interface.get_spi_handle());
+  stm32::spi_ref::enable_spi(m_serial_interface.get_spi_handle());
 
 #endif
 }
@@ -255,14 +255,14 @@ bool Driver::send_spi_bytes(LatchPinOption latch_option [[maybe_unused]])
   for (auto &byte : m_common_byte_register)
   {
     // send the byte of data
-    stm32::spi::send_byte(m_serial_interface.get_spi_handle(), byte);
+    stm32::spi_ref::send_byte(m_serial_interface.get_spi_handle(), byte);
   }
 
   // tell each daisy-chained driver chip to latch all data from its common register
   if (latch_option == LatchPinOption::latch_after_send)
   {
-    LL_GPIO_SetOutputPin(m_serial_interface.get_lat_port(), m_serial_interface.get_lat_pin());
-    LL_GPIO_ResetOutputPin(m_serial_interface.get_lat_port(), m_serial_interface.get_lat_pin());
+    LL_GPIO_SetOutputPin(&m_serial_interface.get_lat_port(), m_serial_interface.get_lat_pin());
+    LL_GPIO_ResetOutputPin(&m_serial_interface.get_lat_port(), m_serial_interface.get_lat_pin());
   }
 #endif
   return true;
@@ -280,7 +280,7 @@ void Driver::gpio_init(void)
   GPIO_InitStruct.Speed      = LL_GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   GPIO_InitStruct.Pull       = LL_GPIO_PULL_DOWN;
-  LL_GPIO_Init(m_serial_interface.get_mosi_port(), &GPIO_InitStruct);
+  LL_GPIO_Init(&m_serial_interface.get_mosi_port(), &GPIO_InitStruct);
 
   // TLC5955_SPI2_SCK
   // LL_GPIO_ResetOutputPin(m_serial_interface.get_sck_port(), m_serial_interface.get_sck_pin());
@@ -289,7 +289,7 @@ void Driver::gpio_init(void)
   GPIO_InitStruct.Speed      = LL_GPIO_SPEED_FREQ_VERY_HIGH;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   GPIO_InitStruct.Pull       = LL_GPIO_PULL_UP;
-  LL_GPIO_Init(m_serial_interface.get_sck_port(), &GPIO_InitStruct);
+  LL_GPIO_Init(&m_serial_interface.get_sck_port(), &GPIO_InitStruct);
 #endif // not X86_UNIT_TESTING_ONLY
 }
 void Driver::spi2_init(void)
@@ -298,30 +298,30 @@ void Driver::spi2_init(void)
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wvolatile"
   // Enable GPIO (SPI_MOSI)
-  LL_GPIO_SetPinSpeed(m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin(), LL_GPIO_SPEED_FREQ_VERY_HIGH);
-  LL_GPIO_SetPinOutputType(m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin(), LL_GPIO_OUTPUT_PUSHPULL);
-  LL_GPIO_SetPinPull(m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin(), LL_GPIO_PULL_DOWN);
-  LL_GPIO_SetAFPin_0_7(m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin(), LL_GPIO_AF_1);
-  LL_GPIO_SetPinMode(m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin(), LL_GPIO_MODE_ALTERNATE);
+  LL_GPIO_SetPinSpeed(&m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin(), LL_GPIO_SPEED_FREQ_VERY_HIGH);
+  LL_GPIO_SetPinOutputType(&m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin(), LL_GPIO_OUTPUT_PUSHPULL);
+  LL_GPIO_SetPinPull(&m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin(), LL_GPIO_PULL_DOWN);
+  LL_GPIO_SetAFPin_0_7(&m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin(), LL_GPIO_AF_1);
+  LL_GPIO_SetPinMode(&m_serial_interface.get_mosi_port(), m_serial_interface.get_mosi_pin(), LL_GPIO_MODE_ALTERNATE);
 
   // Enable GPIO (SPI_SCK)
-  LL_GPIO_SetPinSpeed(m_serial_interface.get_sck_port(), m_serial_interface.get_sck_pin(), LL_GPIO_SPEED_FREQ_VERY_HIGH);
-  LL_GPIO_SetPinOutputType(m_serial_interface.get_sck_port(), m_serial_interface.get_sck_pin(), LL_GPIO_OUTPUT_PUSHPULL);
-  LL_GPIO_SetPinPull(m_serial_interface.get_sck_port(), m_serial_interface.get_sck_pin(), LL_GPIO_PULL_DOWN);
-  LL_GPIO_SetAFPin_8_15(m_serial_interface.get_sck_port(), m_serial_interface.get_sck_pin(), LL_GPIO_AF_1);
-  LL_GPIO_SetPinMode(m_serial_interface.get_sck_port(), m_serial_interface.get_sck_pin(), LL_GPIO_MODE_ALTERNATE);
+  LL_GPIO_SetPinSpeed(&m_serial_interface.get_sck_port(), m_serial_interface.get_sck_pin(), LL_GPIO_SPEED_FREQ_VERY_HIGH);
+  LL_GPIO_SetPinOutputType(&m_serial_interface.get_sck_port(), m_serial_interface.get_sck_pin(), LL_GPIO_OUTPUT_PUSHPULL);
+  LL_GPIO_SetPinPull(&m_serial_interface.get_sck_port(), m_serial_interface.get_sck_pin(), LL_GPIO_PULL_DOWN);
+  LL_GPIO_SetAFPin_8_15(&m_serial_interface.get_sck_port(), m_serial_interface.get_sck_pin(), LL_GPIO_AF_1);
+  LL_GPIO_SetPinMode(&m_serial_interface.get_sck_port(), m_serial_interface.get_sck_pin(), LL_GPIO_MODE_ALTERNATE);
 
-  m_serial_interface.get_spi_handle()->CR1 = 0;
-  m_serial_interface.get_spi_handle()->CR1 |= ((SPI_CR1_BIDIMODE | SPI_CR1_BIDIOE) | (SPI_CR1_MSTR | SPI_CR1_SSI) | SPI_CR1_SSM | SPI_CR1_BR_1);
+  m_serial_interface.get_spi_handle().CR1 = 0;
+  m_serial_interface.get_spi_handle().CR1 |= ((SPI_CR1_BIDIMODE | SPI_CR1_BIDIOE) | (SPI_CR1_MSTR | SPI_CR1_SSI) | SPI_CR1_SSM | SPI_CR1_BR_1);
 
-  CLEAR_BIT(m_serial_interface.get_spi_handle()->CR2, SPI_CR2_NSSP);
+  CLEAR_BIT(m_serial_interface.get_spi_handle().CR2, SPI_CR2_NSSP);
 
   // Enable the PWM OC channel
-  m_serial_interface.get_gsclk_handle()->CCER = m_serial_interface.get_gsclk_handle()->CCER | m_serial_interface.get_gsclk_tim_ch();
+  m_serial_interface.get_gsclk_handle().CCER = m_serial_interface.get_gsclk_handle().CCER | m_serial_interface.get_gsclk_tim_ch();
   // required to enable output on some timers. e.g. TIM16
-  m_serial_interface.get_gsclk_handle()->BDTR = m_serial_interface.get_gsclk_handle()->BDTR | TIM_BDTR_MOE;
+  m_serial_interface.get_gsclk_handle().BDTR = m_serial_interface.get_gsclk_handle().BDTR | TIM_BDTR_MOE;
   // Enable the timer
-  m_serial_interface.get_gsclk_handle()->CR1 = m_serial_interface.get_gsclk_handle()->CR1 | TIM_CR1_CEN;
+  m_serial_interface.get_gsclk_handle().CR1 = m_serial_interface.get_gsclk_handle().CR1 | TIM_CR1_CEN;
 
   #pragma GCC diagnostic pop // ignored "-Wvolatile"
 #endif                       // not X86_UNIT_TESTING_ONLY

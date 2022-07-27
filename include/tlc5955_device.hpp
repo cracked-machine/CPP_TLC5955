@@ -67,49 +67,49 @@ public:
                         std::pair<TIM_TypeDef *, uint16_t> gsclk_tim,
                         uint32_t rcc_gpio_clk,
                         uint32_t rcc_spi_clk)
-      : m_led_spi(led_spi),
-        m_lat_port(lat_gpio.first),
+      : m_led_spi(*led_spi),
+        m_lat_port(*lat_gpio.first),
         m_lat_pin(lat_gpio.second), // init latch port+pin
-        m_mosi_port(mosi_gpio.first),
+        m_mosi_port(*mosi_gpio.first),
         m_mosi_pin(mosi_gpio.second), // init mosi port+pin
-        m_sck_port(sck_gpio.first),
+        m_sck_port(*sck_gpio.first),
         m_sck_pin(sck_gpio.second), // init sck port+pin
-        m_gsclk_tim(gsclk_tim.first),
+        m_gsclk_tim(*gsclk_tim.first),
         m_gsclk_tim_ch(gsclk_tim.second),
         m_rcc_gpio_clk(rcc_gpio_clk),
         m_rcc_spi_clk(rcc_spi_clk)
   {
   }
 
-  SPI_TypeDef *get_spi_handle() { return m_led_spi; }
-  GPIO_TypeDef *get_lat_port() { return m_lat_port; }
+  SPI_TypeDef &get_spi_handle() { return m_led_spi; }
+  GPIO_TypeDef &get_lat_port() { return m_lat_port; }
   uint16_t get_lat_pin() { return m_lat_pin; }
-  GPIO_TypeDef *get_mosi_port() { return m_mosi_port; }
+  GPIO_TypeDef &get_mosi_port() { return m_mosi_port; }
   uint16_t get_mosi_pin() { return m_mosi_pin; }
-  GPIO_TypeDef *get_sck_port() { return m_sck_port; }
+  GPIO_TypeDef &get_sck_port() { return m_sck_port; }
   uint16_t get_sck_pin() { return m_sck_pin; }
-  TIM_TypeDef *get_gsclk_handle() { return m_gsclk_tim; }
+  TIM_TypeDef &get_gsclk_handle() { return m_gsclk_tim; }
   uint16_t get_gsclk_tim_ch() { return m_gsclk_tim_ch; }
   uint32_t get_rcc_gpio_clk() { return m_rcc_gpio_clk; }
   uint32_t get_rcc_spi_clk() { return m_rcc_spi_clk; }
 
 private:
   // @brief The SPI peripheral
-  SPI_TypeDef *m_led_spi;
+  SPI_TypeDef &m_led_spi;
   // @brief The latch GPIO port object
-  GPIO_TypeDef *m_lat_port;
+  GPIO_TypeDef &m_lat_port;
   // @brief The latch GPIO pin
   uint16_t m_lat_pin;
   // @brief The MOSI GPIO port object
-  GPIO_TypeDef *m_mosi_port;
+  GPIO_TypeDef &m_mosi_port;
   // @brief The MOSI GPIO pin
   uint16_t m_mosi_pin;
   // @brief SPI Clock GPIO port
-  GPIO_TypeDef *m_sck_port;
+  GPIO_TypeDef &m_sck_port;
   // @brief SPI Clock GPIO pin
   uint16_t m_sck_pin;
   // @brief Timer used for GSCLK
-  TIM_TypeDef *m_gsclk_tim;
+  TIM_TypeDef &m_gsclk_tim;
   // @brief output channel for GSCLK signal
   uint16_t m_gsclk_tim_ch;
   // @brief Used to enable the GPIO clock for MOSI and SCK pins (for writing first bit)
